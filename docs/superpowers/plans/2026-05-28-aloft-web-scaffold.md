@@ -4,9 +4,9 @@
 
 **Goal:** Migrate `docs/aloft.jsx` into a pnpm monorepo with Vite + React + TypeScript + Tailwind v4, structured for eventual backend and mobile additions.
 
-**Architecture:** pnpm workspace with `apps/web` (Vite + React + TS), `apps/api` (README stub), and `packages/types` (source-only shared TS interfaces, no build step). Prototype logic is split into `usePlates.ts` (all state + mutations), `storage.ts` (localStorage), `notifications.ts` (SW helpers), `PlateCard.tsx` (component), and `App.tsx` (layout). All styles are rewritten as Tailwind utility classes using the default zinc/lime/violet palette.
+**Architecture:** pnpm workspace with `apps/web` (Vite + React + TS), `apps/api` (README stub), and `packages/types` (source-only shared TS interfaces, no build step). Prototype logic is split into `usePlates.ts` (all state + mutations), `storage.ts` (localStorage), `notifications.ts` (SW helpers), `PlateCard/index.tsx` (component), `PlateCard/icons.tsx` (SVG icons), and `App.tsx` (layout). All styles are written as Tailwind utility classes using the default zinc/lime/violet palette; `clsx` is used for conditional class composition.
 
-**Tech Stack:** pnpm workspaces, Vite 6, React 19, TypeScript 5, Tailwind CSS v4, `@tailwindcss/vite`
+**Tech Stack:** pnpm workspaces, Vite 6, React 19, TypeScript 5, Tailwind CSS v4, `@tailwindcss/vite`, `clsx`
 
 ---
 
@@ -26,7 +26,7 @@
 - Create: `apps/api/README.md` — placeholder only
 
 **apps/web** (scaffolded by `pnpm create vite`, then modified)
-- Modify: `apps/web/package.json` — rename to `@aloft/web`, add `@aloft/types` + Tailwind deps, add `typecheck` script
+- Modify: `apps/web/package.json` — rename to `@aloft/web`, add `typecheck` script; deps added via `pnpm add`
 - Modify: `apps/web/vite.config.ts` — add `@tailwindcss/vite` plugin
 - Modify: `apps/web/index.html` — add manifest link, update title
 - Replace: `apps/web/src/index.css` — Tailwind import + Google Fonts + font theme tokens
@@ -38,7 +38,8 @@
 - Create: `apps/web/src/utils/storage.ts` — localStorage helpers
 - Create: `apps/web/src/utils/notifications.ts` — SW registration + schedule helpers
 - Create: `apps/web/src/hooks/usePlates.ts` — all plate state and mutations
-- Create: `apps/web/src/components/PlateCard.tsx` — full card component, Tailwind styled
+- Create: `apps/web/src/components/PlateCard/icons.tsx` — all SVG icon components
+- Create: `apps/web/src/components/PlateCard/index.tsx` — full card component, Tailwind + clsx styled
 - Create: `apps/web/public/sw.js` — service worker
 - Create: `apps/web/public/manifest.json` — PWA manifest
 
@@ -105,11 +106,10 @@ clean:
 	find . -name 'node_modules' -maxdepth 3 -exec rm -rf {} +
 ```
 
-Note: `Makefile` recipes must use real tabs, not spaces. Confirm indentation is a tab character before saving.
+Note: `Makefile` recipes must use real tab characters, not spaces. Confirm indentation before saving.
 
 - [ ] **Step 5: Verify pnpm install works**
 
-Run from repo root:
 ```bash
 pnpm install
 ```
@@ -119,7 +119,7 @@ Expected: `Lockfile was successfully patched` or `Already up to date`. No errors
 
 ```bash
 git add pnpm-workspace.yaml package.json .gitignore Makefile
-git commit -m "chore: add workspace root, Makefile, gitignore"
+git commit -m "Add workspace root, Makefile, gitignore"
 ```
 
 ---
@@ -178,14 +178,14 @@ Backend placeholder. Not yet implemented.
 
 ```bash
 git add packages/ apps/api/
-git commit -m "chore: add shared types package and api stub"
+git commit -m "Add shared types package and api stub"
 ```
 
 ---
 
 ## Task 3: Scaffold apps/web
 
-**Files:** Vite scaffold creates all; we modify `package.json` afterward.
+**Files:** Vite scaffold creates the base; we rename, add a script, then install additional deps.
 
 - [ ] **Step 1: Scaffold the Vite app**
 
@@ -195,58 +195,51 @@ pnpm create vite@latest apps/web -- --template react-ts
 ```
 Expected: `apps/web/` created with `src/`, `public/`, `index.html`, `package.json`, three `tsconfig*.json` files, `vite.config.ts`.
 
-- [ ] **Step 2: Update `apps/web/package.json`**
+- [ ] **Step 2: Update name and scripts in `apps/web/package.json`**
 
-Replace the generated file entirely with:
+Change the `"name"` field and add a `typecheck` script. Leave all dependency versions as Vite set them:
 ```json
 {
   "name": "@aloft/web",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
+  ...
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b"
   },
-  "dependencies": {
-    "@aloft/types": "workspace:*",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^4.0.0",
-    "tailwindcss": "^4.0.0",
-    "typescript": "~5.6.2",
-    "vite": "^6.0.0"
-  }
+  ...
 }
 ```
 
-- [ ] **Step 3: Install dependencies**
+- [ ] **Step 3: Install workspace + runtime deps**
 
-Run from repo root:
+Run from repo root. pnpm resolves current versions automatically:
 ```bash
 pnpm install
+pnpm --filter @aloft/web add @aloft/types@workspace:* clsx
 ```
-Expected: `node_modules` populated in `apps/web/`. The `@aloft/types` workspace package should be linked.
+Expected: `@aloft/types` and `clsx` appear in `apps/web/package.json` dependencies with their resolved versions.
 
-- [ ] **Step 4: Verify the scaffold runs**
+- [ ] **Step 4: Install Tailwind dev deps**
+
+```bash
+pnpm --filter @aloft/web add -D tailwindcss @tailwindcss/vite
+```
+Expected: Both packages appear in `apps/web/package.json` devDependencies.
+
+- [ ] **Step 5: Verify the scaffold runs**
 
 ```bash
 pnpm --filter @aloft/web dev
 ```
 Expected: Vite dev server starts on `http://localhost:5173`. Open in browser — Vite + React demo page appears. Stop with Ctrl+C.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add apps/web/
-git commit -m "chore: scaffold apps/web with Vite + React + TS"
+git commit -m "Scaffold apps/web with Vite + React + TS"
 ```
 
 ---
@@ -284,20 +277,20 @@ export default defineConfig({
 }
 ```
 
-The `@theme` block overrides Tailwind's default `font-sans` and `font-mono` tokens so that `className="font-sans"` and `className="font-mono"` resolve to DM Sans and DM Mono throughout the app.
+The `@theme` block overrides Tailwind's default `font-sans` and `font-mono` tokens so `className="font-sans"` and `className="font-mono"` resolve to DM Sans and DM Mono throughout the app.
 
 - [ ] **Step 3: Verify Tailwind is wired up**
 
 ```bash
 pnpm --filter @aloft/web dev
 ```
-Expected: Dev server starts. Vite demo page still renders (now with Tailwind's CSS reset applied — the default heading font size will appear smaller since Tailwind resets it). Stop with Ctrl+C.
+Expected: Dev server starts without errors. The Vite demo page will still render (now with Tailwind's CSS reset applied — default heading sizes will appear smaller). Stop with Ctrl+C.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add apps/web/vite.config.ts apps/web/src/index.css
-git commit -m "chore: configure Tailwind CSS v4"
+git commit -m "Configure Tailwind CSS v4"
 ```
 
 ---
@@ -313,15 +306,15 @@ git commit -m "chore: configure Tailwind CSS v4"
 import type { AppData } from '@aloft/types';
 
 const STORAGE_KEY = 'aloft_v1';
-const NOTIF_KEY = 'aloft_notif_fired';
+const NOTIFICATION_KEY = 'aloft_notification_fired';
 
-export interface NotifState {
+export interface NotificationState {
   date: string;
   morning: boolean;
   afternoon: boolean;
 }
 
-export function loadData(): AppData {
+export const loadData = (): AppData => {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') || { plates: [] };
     return {
@@ -334,44 +327,44 @@ export function loadData(): AppData {
   } catch {
     return { plates: [] };
   }
-}
+};
 
-export function saveData(data: AppData): void {
+export const saveData = (data: AppData): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
+};
 
-export function loadNotifState(): NotifState {
+export const loadNotificationState = (): NotificationState => {
   try {
-    return JSON.parse(localStorage.getItem(NOTIF_KEY) ?? '{}') || {};
+    return JSON.parse(localStorage.getItem(NOTIFICATION_KEY) ?? '{}') || {};
   } catch {
-    return {} as NotifState;
+    return {} as NotificationState;
   }
-}
+};
 
-export function saveNotifState(state: NotifState): void {
-  localStorage.setItem(NOTIF_KEY, JSON.stringify(state));
-}
+export const saveNotificationState = (state: NotificationState): void => {
+  localStorage.setItem(NOTIFICATION_KEY, JSON.stringify(state));
+};
 ```
 
-The `loadData` normalization step ensures compatibility with existing prototype localStorage data where `snoozedUntil` may be absent on older plate records.
+The `loadData` normalization ensures compatibility with existing prototype localStorage data where `snoozedUntil` may be absent on older plate records.
 
 - [ ] **Step 2: Type-check**
 
 ```bash
 pnpm --filter @aloft/web typecheck
 ```
-Expected: No errors. (The generated `App.tsx` may produce an unused import warning — that's fine, it gets replaced in Task 9.)
+Expected: No errors. (The Vite-generated `App.tsx` may produce warnings — that's fine; it gets replaced in Task 9.)
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add apps/web/src/utils/storage.ts
-git commit -m "feat: add storage utilities"
+git commit -m "Add storage utilities"
 ```
 
 ---
 
-## Task 6: Service Worker + Notifications
+## Task 6: Service Worker + Notification Utilities
 
 **Files:**
 - Create: `apps/web/public/sw.js`
@@ -393,13 +386,13 @@ self.addEventListener('message', (event) => {
 ```ts
 import type { Plate } from '@aloft/types';
 
-export function registerServiceWorker(): void {
+export const registerServiceWorker = (): void => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
   }
-}
+};
 
-export function scheduleWakeNotification(plate: Plate): void {
+export const scheduleWakeNotification = (plate: Plate): void => {
   if (!plate.snoozedUntil) return;
   const delayMs = plate.snoozedUntil - Date.now();
   if (delayMs <= 0) return;
@@ -411,13 +404,13 @@ export function scheduleWakeNotification(plate: Plate): void {
       delayMs,
     });
   });
-}
+};
 
-export function restoreSnoozedNotifications(plates: Plate[]): void {
+export const restoreSnoozedNotifications = (plates: Plate[]): void => {
   plates
     .filter(p => p.snoozedUntil && p.snoozedUntil > Date.now())
     .forEach(scheduleWakeNotification);
-}
+};
 ```
 
 - [ ] **Step 3: Type-check**
@@ -431,7 +424,7 @@ Expected: No errors.
 
 ```bash
 git add apps/web/public/sw.js apps/web/src/utils/notifications.ts
-git commit -m "feat: add service worker and notification utilities"
+git commit -m "Add service worker and notification utilities"
 ```
 
 ---
@@ -446,40 +439,35 @@ git commit -m "feat: add service worker and notification utilities"
 ```ts
 import { useState, useEffect } from 'react';
 import type { AppData, Plate } from '@aloft/types';
-import { loadData, saveData, loadNotifState, saveNotifState } from '../utils/storage';
+import { loadData, saveData, loadNotificationState, saveNotificationState } from '../utils/storage';
 import { scheduleWakeNotification, restoreSnoozedNotifications } from '../utils/notifications';
 
-export function getTodayStr(): string {
-  return new Date().toISOString().split('T')[0];
-}
+export const getTodayStr = (): string => new Date().toISOString().split('T')[0];
 
-export function isDismissedToday(plate: Plate): boolean {
+export const isDismissedToday = (plate: Plate): boolean => {
   if (plate.dismissedOn === getTodayStr()) return true;
   if (plate.snoozedUntil && Date.now() < plate.snoozedUntil) return true;
   return false;
-}
+};
 
-export function isSnoozed(plate: Plate): boolean {
-  return !!(plate.snoozedUntil && Date.now() < plate.snoozedUntil);
-}
+export const isSnoozed = (plate: Plate): boolean =>
+  !!(plate.snoozedUntil && Date.now() < plate.snoozedUntil);
 
-export function snoozeLabel(plate: Plate): string {
+export const snoozeLabel = (plate: Plate): string => {
   if (!plate.snoozedUntil) return '';
   const diff = plate.snoozedUntil - Date.now();
   if (diff <= 0) return '';
   const mins = Math.ceil(diff / 60000);
   if (mins < 60) return `${mins}m`;
   return `${Math.ceil(diff / 3600000)}h`;
-}
+};
 
 let idCounter = Date.now();
-function newId(): string {
-  return String(++idCounter);
-}
+const newId = (): string => String(++idCounter);
 
-export function usePlates() {
+export const usePlates = () => {
   const [data, setData] = useState<AppData>(loadData);
-  const [notifStatus, setNotifStatus] = useState<string>(() => {
+  const [notificationStatus, setNotificationStatus] = useState<string>(() => {
     try { return Notification.permission; }
     catch { return 'unsupported'; }
   });
@@ -491,14 +479,14 @@ export function usePlates() {
     restoreSnoozedNotifications(data.plates);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 9am / 2pm daily nudge (tab-dependent)
+  // 9am / 2pm daily nudge (tab-dependent until backend exists)
   useEffect(() => {
-    if (notifStatus !== 'granted') return;
-    function checkNotif() {
+    if (notificationStatus !== 'granted') return;
+    const checkNotification = () => {
       const now = new Date();
       const today = getTodayStr();
       const hour = now.getHours();
-      const state = loadNotifState();
+      const state = loadNotificationState();
       const fired = state.date === today
         ? state
         : { date: today, morning: false, afternoon: false };
@@ -514,50 +502,50 @@ export function usePlates() {
         shouldFire = true;
       }
       if (!shouldFire) return;
-      saveNotifState(updated);
+      saveNotificationState(updated);
       try {
         new Notification('Aloft', {
           body: `${active.length} plate${active.length > 1 ? 's' : ''} still need attention.`,
           icon: '/favicon.ico',
         });
       } catch { /* not supported in this context */ }
-    }
-    checkNotif();
-    const interval = setInterval(checkNotif, 60_000);
+    };
+    checkNotification();
+    const interval = setInterval(checkNotification, 60_000);
     return () => clearInterval(interval);
-  }, [notifStatus, data.plates]);
+  }, [notificationStatus, data.plates]);
 
-  function requestNotif() {
-    try { Notification.requestPermission().then(p => setNotifStatus(p)); }
-    catch { setNotifStatus('unsupported'); }
-  }
+  const requestNotification = () => {
+    try { Notification.requestPermission().then(p => setNotificationStatus(p)); }
+    catch { setNotificationStatus('unsupported'); }
+  };
 
-  function addPlate(name: string) {
+  const addPlate = (name: string) => {
     setData(d => ({
       ...d,
       plates: [...d.plates, { id: newId(), name, tasks: [], dismissedOn: null, snoozedUntil: null }],
     }));
-  }
+  };
 
-  function deletePlate(id: string) {
+  const deletePlate = (id: string) => {
     setData(d => ({ ...d, plates: d.plates.filter(p => p.id !== id) }));
-  }
+  };
 
-  function dismissPlate(id: string) {
+  const dismissPlate = (id: string) => {
     setData(d => ({
       ...d,
       plates: d.plates.map(p => p.id === id ? { ...p, dismissedOn: getTodayStr() } : p),
     }));
-  }
+  };
 
-  function undoDismiss(id: string) {
+  const undoDismiss = (id: string) => {
     setData(d => ({
       ...d,
       plates: d.plates.map(p => p.id === id ? { ...p, dismissedOn: null, snoozedUntil: null } : p),
     }));
-  }
+  };
 
-  function snoozePlate(id: string, ms: number | null) {
+  const snoozePlate = (id: string, ms: number | null) => {
     const until = ms === null
       ? (() => { const d = new Date(); d.setHours(24, 0, 0, 0); return d.getTime(); })()
       : Date.now() + ms;
@@ -566,22 +554,22 @@ export function usePlates() {
       plates: d.plates.map(p => p.id === id ? { ...p, snoozedUntil: until, dismissedOn: null } : p),
     }));
     scheduleWakeNotification({ snoozedUntil: until } as Plate);
-  }
+  };
 
-  function renamePlate(id: string, name: string) {
+  const renamePlate = (id: string, name: string) => {
     setData(d => ({ ...d, plates: d.plates.map(p => p.id === id ? { ...p, name } : p) }));
-  }
+  };
 
-  function addTask(plateId: string, text: string) {
+  const addTask = (plateId: string, text: string) => {
     setData(d => ({
       ...d,
       plates: d.plates.map(p =>
         p.id === plateId ? { ...p, tasks: [...p.tasks, { id: newId(), text, done: false }] } : p
       ),
     }));
-  }
+  };
 
-  function toggleTask(plateId: string, taskId: string) {
+  const toggleTask = (plateId: string, taskId: string) => {
     setData(d => ({
       ...d,
       plates: d.plates.map(p =>
@@ -590,18 +578,18 @@ export function usePlates() {
           : p
       ),
     }));
-  }
+  };
 
-  function deleteTask(plateId: string, taskId: string) {
+  const deleteTask = (plateId: string, taskId: string) => {
     setData(d => ({
       ...d,
       plates: d.plates.map(p =>
         p.id === plateId ? { ...p, tasks: p.tasks.filter(t => t.id !== taskId) } : p
       ),
     }));
-  }
+  };
 
-  function editTask(plateId: string, taskId: string, text: string) {
+  const editTask = (plateId: string, taskId: string, text: string) => {
     setData(d => ({
       ...d,
       plates: d.plates.map(p =>
@@ -610,14 +598,14 @@ export function usePlates() {
           : p
       ),
     }));
-  }
+  };
 
   return {
     data,
     active: data.plates.filter(p => !isDismissedToday(p)),
     done: data.plates.filter(p => isDismissedToday(p)),
-    notifStatus,
-    requestNotif,
+    notificationStatus,
+    requestNotification,
     addPlate,
     deletePlate,
     dismissPlate,
@@ -629,7 +617,7 @@ export function usePlates() {
     deleteTask,
     editTask,
   };
-}
+};
 ```
 
 - [ ] **Step 2: Type-check**
@@ -643,7 +631,7 @@ Expected: No errors.
 
 ```bash
 git add apps/web/src/hooks/usePlates.ts
-git commit -m "feat: add usePlates hook"
+git commit -m "Add usePlates hook"
 ```
 
 ---
@@ -651,59 +639,79 @@ git commit -m "feat: add usePlates hook"
 ## Task 8: PlateCard Component
 
 **Files:**
-- Create: `apps/web/src/components/PlateCard.tsx`
+- Create: `apps/web/src/components/PlateCard/icons.tsx`
+- Create: `apps/web/src/components/PlateCard/index.tsx`
 
-- [ ] **Step 1: Create `apps/web/src/components/PlateCard.tsx`**
+- [ ] **Step 1: Create `apps/web/src/components/PlateCard/icons.tsx`**
 
 ```tsx
-import { useState, useEffect } from 'react';
-import type { Plate, Task } from '@aloft/types';
-import { isDismissedToday, isSnoozed, snoozeLabel } from '../hooks/usePlates';
-
-const IconCheck = () => (
+export const IconCheck = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
     <path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
-const IconPlus = () => (
+
+export const IconPlus = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
     <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
   </svg>
 );
-const IconTrash = () => (
+
+export const IconTrash = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
     <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
-const IconSnooze = () => (
+
+export const IconSnooze = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
     <circle cx="8" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
     <path d="M8 5.5v3l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
     <path d="M5.5 1.5l-2 2M10.5 1.5l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
   </svg>
 );
-const IconBell = () => (
+
+export const IconBell = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
     <path d="M8 1.5A4.5 4.5 0 003.5 6v3.5L2 11h12l-1.5-1.5V6A4.5 4.5 0 008 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
     <path d="M6.5 11.5a1.5 1.5 0 003 0" stroke="currentColor" strokeWidth="1.5"/>
   </svg>
 );
-const IconChevron = ({ open }: { open: boolean }) => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+
+export const IconChevron = ({ open }: { open: boolean }) => (
+  <svg
+    width="14" height="14" viewBox="0 0 16 16" fill="none"
+    style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+  >
     <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
-const IconUndo = () => (
+
+export const IconUndo = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
     <path d="M3 7V3L1 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     <path d="M3 5a6 6 0 106 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
   </svg>
 );
-const IconEdit = () => (
+
+export const IconEdit = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
     <path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+```
+
+- [ ] **Step 2: Create `apps/web/src/components/PlateCard/index.tsx`**
+
+```tsx
+import { useState, useEffect } from 'react';
+import clsx from 'clsx';
+import type { Plate, Task } from '@aloft/types';
+import { isDismissedToday, isSnoozed, snoozeLabel } from '../../hooks/usePlates';
+import {
+  IconCheck, IconPlus, IconTrash, IconSnooze,
+  IconBell, IconChevron, IconUndo, IconEdit,
+} from './icons';
 
 const SNOOZE_OPTIONS: { label: string; ms: number | null }[] = [
   { label: '20 min', ms: 20 * 60 * 1000 },
@@ -725,11 +733,11 @@ interface Props {
   onEditTask: (plateId: string, taskId: string, text: string) => void;
 }
 
-export default function PlateCard({
+const PlateCard = ({
   plate, onDismiss, onUndoDismiss, onSnooze,
   onAddTask, onToggleTask, onDeleteTask, onDelete,
   onRenamePlate, onEditTask,
-}: Props) {
+}: Props) => {
   const [expanded, setExpanded] = useState(false);
   const [taskInput, setTaskInput] = useState('');
   const [editingName, setEditingName] = useState(false);
@@ -749,41 +757,43 @@ export default function PlateCard({
   const snoozed = isSnoozed(plate);
   const doneTasks = plate.tasks.filter(t => t.done);
 
-  const cardClass = snoozed
-    ? 'bg-zinc-900/70 border border-zinc-800/60 rounded-xl mb-2 opacity-75 transition-all'
-    : dismissed
-    ? 'bg-zinc-950 border border-zinc-900 rounded-xl mb-2 opacity-60 transition-all'
-    : 'bg-zinc-900 border border-zinc-800 rounded-xl mb-2 transition-all hover:border-zinc-700';
+  const cardClass = clsx(
+    'rounded-xl mb-2 transition-all',
+    snoozed  && 'bg-zinc-900/70 border border-zinc-800/60 opacity-75',
+    dismissed && !snoozed && 'bg-zinc-950 border border-zinc-900 opacity-60',
+    !dismissed && !snoozed && 'bg-zinc-900 border border-zinc-800 hover:border-zinc-700',
+  );
 
-  const dotClass = snoozed
-    ? 'w-2 h-2 rounded-full shrink-0 bg-violet-400 shadow-[0_0_8px_#7c3aed44]'
-    : dismissed
-    ? 'w-2 h-2 rounded-full shrink-0 bg-zinc-700'
-    : 'w-2 h-2 rounded-full shrink-0 bg-lime-300 shadow-[0_0_8px_#bef26444]';
+  const dotClass = clsx(
+    'w-2 h-2 rounded-full shrink-0',
+    snoozed  && 'bg-violet-400 shadow-[0_0_8px_#7c3aed44]',
+    dismissed && !snoozed && 'bg-zinc-700',
+    !dismissed && !snoozed && 'bg-lime-300 shadow-[0_0_8px_#bef26444]',
+  );
 
-  function handleAddTask(e: React.FormEvent) {
-    e.preventDefault();
-    if (taskInput.trim()) { onAddTask(plate.id, taskInput.trim()); setTaskInput(''); }
-  }
-
-  function commitRename() {
+  const commitRename = () => {
     const v = nameVal.trim();
     if (v && v !== plate.name) onRenamePlate(plate.id, v);
     else setNameVal(plate.name);
     setEditingName(false);
-  }
+  };
 
-  function startEditTask(task: Task) {
+  const startEditTask = (task: Task) => {
     setEditingTaskId(task.id);
     setEditingTaskVal(task.text);
-  }
+  };
 
-  function commitEditTask() {
+  const commitEditTask = () => {
     const v = editingTaskVal.trim();
     if (v && editingTaskId) onEditTask(plate.id, editingTaskId, v);
     setEditingTaskId(null);
     setEditingTaskVal('');
-  }
+  };
+
+  const handleAddTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (taskInput.trim()) { onAddTask(plate.id, taskInput.trim()); setTaskInput(''); }
+  };
 
   return (
     <div className={cardClass}>
@@ -807,7 +817,7 @@ export default function PlateCard({
               onClick={e => e.stopPropagation()}
             />
           ) : (
-            <span className={`text-[15px] font-medium truncate ${dismissed ? 'text-zinc-600' : 'text-zinc-300'}`}>
+            <span className={clsx('text-[15px] font-medium truncate', dismissed ? 'text-zinc-600' : 'text-zinc-300')}>
               {plate.name}
             </span>
           )}
@@ -848,11 +858,12 @@ export default function PlateCard({
               {plate.tasks.map(task => (
                 <div key={task.id} className="flex items-center gap-2">
                   <button
-                    className={`w-[18px] h-[18px] rounded border bg-transparent cursor-pointer flex items-center justify-center shrink-0 transition-all ${
+                    className={clsx(
+                      'w-[18px] h-[18px] rounded border bg-transparent cursor-pointer flex items-center justify-center shrink-0 transition-all',
                       task.done
                         ? 'bg-lime-300 border-lime-300 text-zinc-950'
-                        : 'border-zinc-700 text-transparent hover:border-lime-300'
-                    }`}
+                        : 'border-zinc-700 text-transparent hover:border-lime-300',
+                    )}
                     onClick={() => onToggleTask(plate.id, task.id)}
                   >
                     {task.done && <IconCheck />}
@@ -871,7 +882,7 @@ export default function PlateCard({
                     />
                   ) : (
                     <span
-                      className={`text-[13px] flex-1 ${task.done ? 'line-through text-zinc-600' : 'text-zinc-400'}`}
+                      className={clsx('text-[13px] flex-1', task.done ? 'line-through text-zinc-600' : 'text-zinc-400')}
                       onDoubleClick={() => !task.done && startEditTask(task)}
                     >
                       {task.text}
@@ -976,21 +987,23 @@ export default function PlateCard({
       )}
     </div>
   );
-}
+};
+
+export default PlateCard;
 ```
 
-- [ ] **Step 2: Type-check**
+- [ ] **Step 3: Type-check**
 
 ```bash
 pnpm --filter @aloft/web typecheck
 ```
 Expected: No errors.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add apps/web/src/components/PlateCard.tsx
-git commit -m "feat: add PlateCard component"
+git add apps/web/src/components/
+git commit -m "Add PlateCard component with icons"
 ```
 
 ---
@@ -1025,22 +1038,22 @@ const IconBell = () => (
   </svg>
 );
 
-export default function App() {
+const App = () => {
   const [newName, setNewName] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const {
-    data, active, done, notifStatus, requestNotif,
+    data, active, done, notificationStatus, requestNotification,
     addPlate, deletePlate, dismissPlate, undoDismiss,
     snoozePlate, renamePlate, addTask, toggleTask, deleteTask, editTask,
   } = usePlates();
 
-  function handleAddPlate(e: React.FormEvent) {
+  const handleAddPlate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
     addPlate(newName.trim());
     setNewName('');
     setShowAdd(false);
-  }
+  };
 
   return (
     <div className="bg-zinc-950 text-zinc-100 min-h-screen font-sans">
@@ -1057,16 +1070,16 @@ export default function App() {
             <span className="font-mono text-[13px] text-zinc-500">
               <span className="text-lime-300">{done.length}</span>/{data.plates.length}
             </span>
-            {notifStatus !== 'unsupported' && (
+            {notificationStatus !== 'unsupported' && (
               <button
                 className={`bg-zinc-900 border border-zinc-800 px-2.5 py-1.5 rounded-md cursor-pointer text-xs flex items-center gap-1.5 transition-all hover:border-zinc-700 ${
-                  notifStatus === 'granted' ? 'text-lime-300' : 'text-zinc-500 hover:text-zinc-400'
+                  notificationStatus === 'granted' ? 'text-lime-300' : 'text-zinc-500 hover:text-zinc-400'
                 }`}
-                onClick={requestNotif}
+                onClick={requestNotification}
                 title="Enable daily notifications"
               >
                 <IconBell />
-                {notifStatus === 'granted' ? 'on' : 'notify'}
+                {notificationStatus === 'granted' ? 'on' : 'notify'}
               </button>
             )}
           </div>
@@ -1151,7 +1164,9 @@ export default function App() {
       </div>
     </div>
   );
-}
+};
+
+export default App;
 ```
 
 - [ ] **Step 2: Replace `apps/web/src/main.tsx`**
@@ -1229,7 +1244,7 @@ Expected: No errors.
 
 ```bash
 git add apps/web/src/ apps/web/index.html apps/web/public/manifest.json
-git commit -m "feat: migrate prototype to Vite + React + TS + Tailwind"
+git commit -m "Migrate prototype to Vite + React + TS + Tailwind"
 ```
 
 ---
@@ -1253,7 +1268,7 @@ Expected: Vite starts on `http://localhost:5173`.
 - [ ] **Step 3: Browser smoke test**
 
 Open `http://localhost:5173`. Verify:
-- Dark background (`zinc-950`), "aloft" heading in monospace
+- Dark background (`zinc-950`), "aloft" heading in monospace (DM Mono)
 - Date string displayed below heading
 - "no plates yet — add one below" empty state
 - Click "Add plate" → input + Cancel + Add buttons appear
@@ -1270,9 +1285,9 @@ Open `http://localhost:5173`. Verify:
 
 - [ ] **Step 4: Commit any fixups found during smoke test**
 
-If any visual or functional issues were found and fixed in Step 3, commit them:
+If issues were found and fixed in Step 3:
 ```bash
 git add -p
-git commit -m "fix: smoke test corrections"
+git commit -m "Fix smoke test issues"
 ```
 If no issues, skip this step.
