@@ -6,13 +6,13 @@ A minimal juggling tracker — keep your balls in the air without overthinking i
 
 - **Node.js** v22+
 - **pnpm** — install via:
-  ```bash
-  curl -fsSL https://get.pnpm.io/install.sh | sh -
-  ```
-  Or if you already have Node.js, enable via Corepack:
-  ```bash
-  corepack enable pnpm
-  ```
+    ```bash
+    curl -fsSL https://get.pnpm.io/install.sh | sh -
+    ```
+    Or if you already have Node.js, enable via Corepack:
+    ```bash
+    corepack enable pnpm
+    ```
 
 ## Setup
 

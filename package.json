@@ -1,5 +1,13 @@
 {
-  "name": "aloft",
-  "version": "0.0.0",
-  "private": true
+    "name": "aloft",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
+    },
+    "devDependencies": {
+        "@trivago/prettier-plugin-sort-imports": "^6.0.2",
+        "prettier": "^3.8.3"
+    }
 }

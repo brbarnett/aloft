@@ -18,17 +18,15 @@ All state lives under the key `aloft_v1` in localStorage as JSON:
 
 ```json
 {
-  "plates": [
-    {
-      "id": "string (timestamp-based)",
-      "name": "string",
-      "tasks": [
-        { "id": "string", "text": "string", "done": false }
-      ],
-      "dismissedOn": "YYYY-MM-DD or null",
-      "snoozedUntil": "unix timestamp ms or null"
-    }
-  ]
+    "plates": [
+        {
+            "id": "string (timestamp-based)",
+            "name": "string",
+            "tasks": [{ "id": "string", "text": "string", "done": false }],
+            "dismissedOn": "YYYY-MM-DD or null",
+            "snoozedUntil": "unix timestamp ms or null"
+        }
+    ]
 }
 ```
 
@@ -47,6 +45,7 @@ A plate is in one of three states at any given moment:
 - **Dismissed** — done for today. Resets to active at midnight. Grey dot.
 
 The distinction between snoozed and dismissed:
+
 - `dismissedOn === today` → dismissed until midnight
 - `snoozedUntil > Date.now()` → snoozed until that timestamp
 - Both checks live in `isDismissedToday(plate)`
@@ -100,7 +99,7 @@ This is the most important upgrade. A service worker runs independently of the t
 
 ```js
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+    navigator.serviceWorker.register('/sw.js');
 }
 ```
 
@@ -108,12 +107,12 @@ if ('serviceWorker' in navigator) {
 
 ```js
 self.addEventListener('message', (event) => {
-  if (event.data?.type === 'SCHEDULE_NOTIFICATION') {
-    const { title, body, delayMs } = event.data;
-    setTimeout(() => {
-      self.registration.showNotification(title, { body, icon: '/icon.png' });
-    }, delayMs);
-  }
+    if (event.data?.type === 'SCHEDULE_NOTIFICATION') {
+        const { title, body, delayMs } = event.data;
+        setTimeout(() => {
+            self.registration.showNotification(title, { body, icon: '/icon.png' });
+        }, delayMs);
+    }
 });
 ```
 
@@ -121,9 +120,9 @@ self.addEventListener('message', (event) => {
 
 ```js
 function scheduleNotification(title, body, delayMs) {
-  navigator.serviceWorker.ready.then(reg => {
-    reg.active.postMessage({ type: 'SCHEDULE_NOTIFICATION', title, body, delayMs });
-  });
+    navigator.serviceWorker.ready.then((reg) => {
+        reg.active.postMessage({ type: 'SCHEDULE_NOTIFICATION', title, body, delayMs });
+    });
 }
 ```
 
@@ -135,22 +134,23 @@ In `public/manifest.json`:
 
 ```json
 {
-  "name": "Aloft",
-  "short_name": "Aloft",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#0f0f0f",
-  "theme_color": "#0f0f0f",
-  "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+    "name": "Aloft",
+    "short_name": "Aloft",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f0f0f",
+    "theme_color": "#0f0f0f",
+    "icons": [
+        { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    ]
 }
 ```
 
 Reference it in `index.html`:
+
 ```html
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="/manifest.json" />
 ```
 
 Once deployed, Chrome and Safari will offer an "Add to Home Screen" prompt. On iOS this still won't give you push notifications (Apple restriction) but it gives you the full-screen standalone experience.

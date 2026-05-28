@@ -1,427 +1,538 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from 'react';
 
-const STORAGE_KEY = "aloft_v1";
-const NOTIF_KEY = "aloft_notif_fired";
+const STORAGE_KEY = 'aloft_v1';
+const NOTIF_KEY = 'aloft_notif_fired';
 function getNotifState() {
-  try { return JSON.parse(localStorage.getItem(NOTIF_KEY)) || {}; } catch { return {}; }
+    try {
+        return JSON.parse(localStorage.getItem(NOTIF_KEY)) || {};
+    } catch {
+        return {};
+    }
 }
 function saveNotifState(s) {
-  localStorage.setItem(NOTIF_KEY, JSON.stringify(s));
+    localStorage.setItem(NOTIF_KEY, JSON.stringify(s));
 }
 
 function getTodayStr() {
-  return new Date().toISOString().split("T")[0];
+    return new Date().toISOString().split('T')[0];
 }
 
 function loadData() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { plates: [] };
-  } catch {
-    return { plates: [] };
-  }
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { plates: [] };
+    } catch {
+        return { plates: [] };
+    }
 }
 
 function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
 function isDismissedToday(plate) {
-  if (plate.dismissedOn === getTodayStr()) return true;
-  if (plate.snoozedUntil && Date.now() < plate.snoozedUntil) return true;
-  return false;
+    if (plate.dismissedOn === getTodayStr()) return true;
+    if (plate.snoozedUntil && Date.now() < plate.snoozedUntil) return true;
+    return false;
 }
 
 function isSnoozed(plate) {
-  return plate.snoozedUntil && Date.now() < plate.snoozedUntil;
+    return plate.snoozedUntil && Date.now() < plate.snoozedUntil;
 }
 
 function snoozeLabel(plate) {
-  if (!plate.snoozedUntil) return "";
-  const diff = plate.snoozedUntil - Date.now();
-  if (diff <= 0) return "";
-  const mins = Math.ceil(diff / 60000);
-  if (mins < 60) return `${mins}m`;
-  const hrs = Math.ceil(diff / 3600000);
-  return `${hrs}h`;
+    if (!plate.snoozedUntil) return '';
+    const diff = plate.snoozedUntil - Date.now();
+    if (diff <= 0) return '';
+    const mins = Math.ceil(diff / 60000);
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.ceil(diff / 3600000);
+    return `${hrs}h`;
 }
 
 let idCounter = Date.now();
 function newId() {
-  return String(++idCounter);
+    return String(++idCounter);
 }
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const IconCheck = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path
+            d="M3 8l3.5 3.5L13 4.5"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
 );
 const IconPlus = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
 );
 const IconTrash = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-    <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <path
+            d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
 );
 const IconSnooze = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <circle cx="8" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
-    <path d="M8 5.5v3l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    <path d="M5.5 1.5l-2 2M10.5 1.5l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-  </svg>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M8 5.5v3l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M5.5 1.5l-2 2M10.5 1.5l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
 );
 const IconBell = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M8 1.5A4.5 4.5 0 003.5 6v3.5L2 11h12l-1.5-1.5V6A4.5 4.5 0 008 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-    <path d="M6.5 11.5a1.5 1.5 0 003 0" stroke="currentColor" strokeWidth="1.5"/>
-  </svg>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path
+            d="M8 1.5A4.5 4.5 0 003.5 6v3.5L2 11h12l-1.5-1.5V6A4.5 4.5 0 008 1.5z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+        />
+        <path d="M6.5 11.5a1.5 1.5 0 003 0" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
 );
 const IconChevron = ({ open }) => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
-    <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
+    <svg
+        width="14"
+        height="14"
+        viewBox="0 0 16 16"
+        fill="none"
+        style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+    >
+        <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
 );
 const IconUndo = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-    <path d="M3 7V3L1 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M3 5a6 6 0 106 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-  </svg>
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <path d="M3 7V3L1 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 5a6 6 0 106 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
 );
 const IconEdit = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-    <path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <path
+            d="M11 2l3 3-8 8H3v-3l8-8z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
 );
 
 // ── PlateCard ──────────────────────────────────────────────────────────────
-function PlateCard({ plate, onDismiss, onUndoDismiss, onSnooze, onAddTask, onToggleTask, onDeleteTask, onDelete, onRenamePlate, onEditTask }) {
-  const [expanded, setExpanded] = useState(false);
-  const [taskInput, setTaskInput] = useState("");
-  const [editingName, setEditingName] = useState(false);
-  const [nameVal, setNameVal] = useState(plate.name);
-  const [editingTaskId, setEditingTaskId] = useState(null);
-  const [editingTaskVal, setEditingTaskVal] = useState("");
-  const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
-  const [, forceUpdate] = useState(0);
-  // re-render every 30s so snooze countdown stays accurate
-  useEffect(() => {
-    const t = setInterval(() => forceUpdate(n => n + 1), 30000);
-    return () => clearInterval(t);
-  }, []);
-  const dismissed = isDismissedToday(plate);
-  const snoozed = isSnoozed(plate);
-  const doneTasks = plate.tasks.filter(t => t.done);
+function PlateCard({
+    plate,
+    onDismiss,
+    onUndoDismiss,
+    onSnooze,
+    onAddTask,
+    onToggleTask,
+    onDeleteTask,
+    onDelete,
+    onRenamePlate,
+    onEditTask,
+}) {
+    const [expanded, setExpanded] = useState(false);
+    const [taskInput, setTaskInput] = useState('');
+    const [editingName, setEditingName] = useState(false);
+    const [nameVal, setNameVal] = useState(plate.name);
+    const [editingTaskId, setEditingTaskId] = useState(null);
+    const [editingTaskVal, setEditingTaskVal] = useState('');
+    const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
+    const [, forceUpdate] = useState(0);
+    // re-render every 30s so snooze countdown stays accurate
+    useEffect(() => {
+        const t = setInterval(() => forceUpdate((n) => n + 1), 30000);
+        return () => clearInterval(t);
+    }, []);
+    const dismissed = isDismissedToday(plate);
+    const snoozed = isSnoozed(plate);
+    const doneTasks = plate.tasks.filter((t) => t.done);
 
-  const SNOOZE_OPTIONS = [
-    { label: "20 min", ms: 20 * 60 * 1000 },
-    { label: "1 hr",  ms: 60 * 60 * 1000 },
-    { label: "2 hr",  ms: 2 * 60 * 60 * 1000 },
-    { label: "Tomorrow", ms: null },
-  ];
+    const SNOOZE_OPTIONS = [
+        { label: '20 min', ms: 20 * 60 * 1000 },
+        { label: '1 hr', ms: 60 * 60 * 1000 },
+        { label: '2 hr', ms: 2 * 60 * 60 * 1000 },
+        { label: 'Tomorrow', ms: null },
+    ];
 
-  function handleAddTask(e) {
-    e.preventDefault();
-    if (taskInput.trim()) {
-      onAddTask(plate.id, taskInput.trim());
-      setTaskInput("");
+    function handleAddTask(e) {
+        e.preventDefault();
+        if (taskInput.trim()) {
+            onAddTask(plate.id, taskInput.trim());
+            setTaskInput('');
+        }
     }
-  }
 
-  function commitRename() {
-    const v = nameVal.trim();
-    if (v && v !== plate.name) onRenamePlate(plate.id, v);
-    else setNameVal(plate.name);
-    setEditingName(false);
-  }
+    function commitRename() {
+        const v = nameVal.trim();
+        if (v && v !== plate.name) onRenamePlate(plate.id, v);
+        else setNameVal(plate.name);
+        setEditingName(false);
+    }
 
-  function startEditTask(task) {
-    setEditingTaskId(task.id);
-    setEditingTaskVal(task.text);
-  }
+    function startEditTask(task) {
+        setEditingTaskId(task.id);
+        setEditingTaskVal(task.text);
+    }
 
-  function commitEditTask() {
-    const v = editingTaskVal.trim();
-    if (v) onEditTask(plate.id, editingTaskId, v);
-    setEditingTaskId(null);
-    setEditingTaskVal("");
-  }
+    function commitEditTask() {
+        const v = editingTaskVal.trim();
+        if (v) onEditTask(plate.id, editingTaskId, v);
+        setEditingTaskId(null);
+        setEditingTaskVal('');
+    }
 
-  return (
-    <div className={`plate-card ${dismissed ? (snoozed ? "plate-snoozed" : "plate-dismissed") : "plate-active"}`}>
-      <div className="plate-header" onClick={() => !editingName && setExpanded(e => !e)}>
-        <div className="plate-header-left">
-          <div className={`plate-dot ${snoozed ? "dot-snoozed" : dismissed ? "dot-done" : "dot-pending"}`} />
-          {editingName ? (
-            <input
-              className="inline-edit-input"
-              value={nameVal}
-              autoFocus
-              onChange={e => setNameVal(e.target.value)}
-              onBlur={commitRename}
-              onKeyDown={e => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") { setNameVal(plate.name); setEditingName(false); } }}
-              onClick={e => e.stopPropagation()}
-            />
-          ) : (
-            <span className="plate-name">{plate.name}</span>
-          )}
-          {plate.tasks.length > 0 && (
-            <span className="task-badge">{doneTasks.length}/{plate.tasks.length}</span>
-          )}
-          {snoozed && (
-            <span className="snooze-badge">⏱ {snoozeLabel(plate)}</span>
-          )}
-        </div>
-        <div className="plate-header-right">
-          <button className="icon-btn edit-btn" onClick={e => { e.stopPropagation(); setEditingName(true); setExpanded(true); }} title="Rename">
-            <IconEdit />
-          </button>
-          <button className="icon-btn delete-btn" onClick={e => { e.stopPropagation(); onDelete(plate.id); }} title="Delete">
-            <IconTrash />
-          </button>
-          <IconChevron open={expanded} />
-        </div>
-      </div>
-
-      {expanded && (
-        <div className="plate-body">
-          {plate.tasks.length > 0 && (
-            <div className="task-list">
-              {plate.tasks.map(task => (
-                <div key={task.id} className={`task-row ${task.done ? "task-done" : ""}`}>
-                  <button className={`task-check ${task.done ? "checked" : ""}`} onClick={() => onToggleTask(plate.id, task.id)}>
-                    {task.done && <IconCheck />}
-                  </button>
-                  {editingTaskId === task.id ? (
-                    <input
-                      className="task-input"
-                      value={editingTaskVal}
-                      autoFocus
-                      onChange={e => setEditingTaskVal(e.target.value)}
-                      onBlur={commitEditTask}
-                      onKeyDown={e => { if (e.key === "Enter") commitEditTask(); if (e.key === "Escape") setEditingTaskId(null); }}
-                    />
-                  ) : (
-                    <span className="task-label" onDoubleClick={() => !task.done && startEditTask(task)}>{task.text}</span>
-                  )}
-                  {editingTaskId !== task.id && (
-                    <>
-                      {!task.done && <button className="icon-btn" onClick={() => startEditTask(task)} title="Edit"><IconEdit /></button>}
-                      <button className="icon-btn" onClick={() => onDeleteTask(plate.id, task.id)}><IconTrash /></button>
-                    </>
-                  )}
+    return (
+        <div className={`plate-card ${dismissed ? (snoozed ? 'plate-snoozed' : 'plate-dismissed') : 'plate-active'}`}>
+            <div className="plate-header" onClick={() => !editingName && setExpanded((e) => !e)}>
+                <div className="plate-header-left">
+                    <div className={`plate-dot ${snoozed ? 'dot-snoozed' : dismissed ? 'dot-done' : 'dot-pending'}`} />
+                    {editingName ? (
+                        <input
+                            className="inline-edit-input"
+                            value={nameVal}
+                            autoFocus
+                            onChange={(e) => setNameVal(e.target.value)}
+                            onBlur={commitRename}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') commitRename();
+                                if (e.key === 'Escape') {
+                                    setNameVal(plate.name);
+                                    setEditingName(false);
+                                }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    ) : (
+                        <span className="plate-name">{plate.name}</span>
+                    )}
+                    {plate.tasks.length > 0 && (
+                        <span className="task-badge">
+                            {doneTasks.length}/{plate.tasks.length}
+                        </span>
+                    )}
+                    {snoozed && <span className="snooze-badge">⏱ {snoozeLabel(plate)}</span>}
                 </div>
-              ))}
+                <div className="plate-header-right">
+                    <button
+                        className="icon-btn edit-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingName(true);
+                            setExpanded(true);
+                        }}
+                        title="Rename"
+                    >
+                        <IconEdit />
+                    </button>
+                    <button
+                        className="icon-btn delete-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(plate.id);
+                        }}
+                        title="Delete"
+                    >
+                        <IconTrash />
+                    </button>
+                    <IconChevron open={expanded} />
+                </div>
             </div>
-          )}
 
-          <form className="add-task-form" onSubmit={handleAddTask}>
-            <input
-              className="task-input"
-              placeholder="Add a task..."
-              value={taskInput}
-              onChange={e => setTaskInput(e.target.value)}
-            />
-            <button type="submit" className="icon-btn add-task-btn" disabled={!taskInput.trim()}>
-              <IconPlus />
-            </button>
-          </form>
+            {expanded && (
+                <div className="plate-body">
+                    {plate.tasks.length > 0 && (
+                        <div className="task-list">
+                            {plate.tasks.map((task) => (
+                                <div key={task.id} className={`task-row ${task.done ? 'task-done' : ''}`}>
+                                    <button
+                                        className={`task-check ${task.done ? 'checked' : ''}`}
+                                        onClick={() => onToggleTask(plate.id, task.id)}
+                                    >
+                                        {task.done && <IconCheck />}
+                                    </button>
+                                    {editingTaskId === task.id ? (
+                                        <input
+                                            className="task-input"
+                                            value={editingTaskVal}
+                                            autoFocus
+                                            onChange={(e) => setEditingTaskVal(e.target.value)}
+                                            onBlur={commitEditTask}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') commitEditTask();
+                                                if (e.key === 'Escape') setEditingTaskId(null);
+                                            }}
+                                        />
+                                    ) : (
+                                        <span
+                                            className="task-label"
+                                            onDoubleClick={() => !task.done && startEditTask(task)}
+                                        >
+                                            {task.text}
+                                        </span>
+                                    )}
+                                    {editingTaskId !== task.id && (
+                                        <>
+                                            {!task.done && (
+                                                <button
+                                                    className="icon-btn"
+                                                    onClick={() => startEditTask(task)}
+                                                    title="Edit"
+                                                >
+                                                    <IconEdit />
+                                                </button>
+                                            )}
+                                            <button
+                                                className="icon-btn"
+                                                onClick={() => onDeleteTask(plate.id, task.id)}
+                                            >
+                                                <IconTrash />
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-          {!dismissed && (
-            <div className="dismiss-section">
-              <div className="action-row">
-                <button className="dismiss-btn" onClick={() => onDismiss(plate.id)}>
-                  <IconSnooze /> Done for today
-                </button>
-                <div className="snooze-wrap">
-                  <button className="snooze-trigger-btn" onClick={() => setShowSnoozeMenu(v => !v)}>
-                    <IconBell /> Snooze
-                  </button>
-                  {showSnoozeMenu && (
-                    <div className="snooze-menu">
-                      {SNOOZE_OPTIONS.map(opt => (
-                        <button key={opt.label} className="snooze-option" onClick={() => {
-                          onSnooze(plate.id, opt.ms);
-                          setShowSnoozeMenu(false);
-                        }}>
-                          {opt.label}
+                    <form className="add-task-form" onSubmit={handleAddTask}>
+                        <input
+                            className="task-input"
+                            placeholder="Add a task..."
+                            value={taskInput}
+                            onChange={(e) => setTaskInput(e.target.value)}
+                        />
+                        <button type="submit" className="icon-btn add-task-btn" disabled={!taskInput.trim()}>
+                            <IconPlus />
                         </button>
-                      ))}
-                    </div>
-                  )}
+                    </form>
+
+                    {!dismissed && (
+                        <div className="dismiss-section">
+                            <div className="action-row">
+                                <button className="dismiss-btn" onClick={() => onDismiss(plate.id)}>
+                                    <IconSnooze /> Done for today
+                                </button>
+                                <div className="snooze-wrap">
+                                    <button className="snooze-trigger-btn" onClick={() => setShowSnoozeMenu((v) => !v)}>
+                                        <IconBell /> Snooze
+                                    </button>
+                                    {showSnoozeMenu && (
+                                        <div className="snooze-menu">
+                                            {SNOOZE_OPTIONS.map((opt) => (
+                                                <button
+                                                    key={opt.label}
+                                                    className="snooze-option"
+                                                    onClick={() => {
+                                                        onSnooze(plate.id, opt.ms);
+                                                        setShowSnoozeMenu(false);
+                                                    }}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {snoozed && (
+                        <div className="dismissed-note">
+                            <span className="note-label">Snoozed for {snoozeLabel(plate)}</span>
+                            <button className="undo-btn" onClick={() => onUndoDismiss(plate.id)}>
+                                <IconUndo /> Wake
+                            </button>
+                        </div>
+                    )}
+
+                    {dismissed && !snoozed && (
+                        <div className="dismissed-note">
+                            <span className="note-label">Dismissed — see you tomorrow</span>
+                            <button className="undo-btn" onClick={() => onUndoDismiss(plate.id)}>
+                                <IconUndo /> Undo
+                            </button>
+                        </div>
+                    )}
                 </div>
-              </div>
-            </div>
-          )}
-
-          {snoozed && (
-            <div className="dismissed-note">
-              <span className="note-label">Snoozed for {snoozeLabel(plate)}</span>
-              <button className="undo-btn" onClick={() => onUndoDismiss(plate.id)}>
-                <IconUndo /> Wake
-              </button>
-            </div>
-          )}
-
-          {dismissed && !snoozed && (
-            <div className="dismissed-note">
-              <span className="note-label">Dismissed — see you tomorrow</span>
-              <button className="undo-btn" onClick={() => onUndoDismiss(plate.id)}>
-                <IconUndo /> Undo
-              </button>
-            </div>
-          )}
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 }
 
 // ── Main App ───────────────────────────────────────────────────────────────
 export default function App() {
-  const [data, setData] = useState(loadData);
-  const [newName, setNewName] = useState("");
-  const [notifStatus, setNotifStatus] = useState(() => {
-    try { return Notification?.permission ?? "default"; } catch { return "unsupported"; }
-  });
-  const [showAdd, setShowAdd] = useState(false);
-
-  // Persist
-  useEffect(() => { saveData(data); }, [data]);
-
-  // Notifications at 9am and 2pm if any plates are still active
-  useEffect(() => {
-    if (notifStatus !== "granted") return;
-    function checkNotif() {
-      const now = new Date();
-      const today = getTodayStr();
-      const hour = now.getHours();
-      const state = getNotifState();
-      const fired = state.date === today ? state : { date: today, morning: false, afternoon: false };
-      const active = data.plates.filter(p => !isDismissedToday(p));
-      if (active.length === 0) return;
-      let updated = { ...fired };
-      let shouldFire = false;
-      if (hour >= 9 && hour < 14 && !fired.morning) {
-        updated.morning = true;
-        shouldFire = true;
-      } else if (hour >= 14 && !fired.afternoon) {
-        updated.afternoon = true;
-        shouldFire = true;
-      }
-      if (!shouldFire) return;
-      saveNotifState(updated);
-      try {
-        new Notification("Aloft", {
-          body: `${active.length} plate${active.length > 1 ? "s" : ""} still need attention.`,
-          icon: "/favicon.ico",
-        });
-      } catch { /* not supported */ }
-    }
-    checkNotif();
-    const interval = setInterval(checkNotif, 60 * 1000);
-    return () => clearInterval(interval);
-  }, [notifStatus, data.plates]);
-
-  function requestNotif() {
-    try { Notification.requestPermission().then(p => setNotifStatus(p)); } catch { setNotifStatus("unsupported"); }
-  }
-
-  function addPlate(e) {
-    e.preventDefault();
-    if (!newName.trim()) return;
-    setData(d => ({
-      ...d,
-      plates: [...d.plates, { id: newId(), name: newName.trim(), tasks: [], dismissedOn: null }]
-    }));
-    setNewName("");
-    setShowAdd(false);
-  }
-
-  function deletePlate(id) {
-    setData(d => ({ ...d, plates: d.plates.filter(p => p.id !== id) }));
-  }
-
-  function dismissPlate(id) {
-    setData(d => ({
-      ...d,
-      plates: d.plates.map(p => p.id === id ? { ...p, dismissedOn: getTodayStr() } : p)
-    }));
-  }
-
-  function renamePlate(id, name) {
-    setData(d => ({ ...d, plates: d.plates.map(p => p.id === id ? { ...p, name } : p) }));
-  }
-
-  function undoDismiss(id) {
-    setData(d => ({ ...d, plates: d.plates.map(p => p.id === id ? { ...p, dismissedOn: null } : p) }));
-  }
-
-  function snoozePlate(id, ms) {
-    const until = ms === null
-      ? (() => { const d = new Date(); d.setHours(24,0,0,0); return d.getTime(); })()
-      : Date.now() + ms;
-    setData(d => ({
-      ...d,
-      plates: d.plates.map(p => p.id === id ? { ...p, snoozedUntil: until, dismissedOn: null } : p)
-    }));
-    // Schedule wake notification
-    const remaining = until - Date.now();
-    setTimeout(() => {
-      try {
-        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-          new Notification("Aloft", { body: `Time to check back in.` });
+    const [data, setData] = useState(loadData);
+    const [newName, setNewName] = useState('');
+    const [notifStatus, setNotifStatus] = useState(() => {
+        try {
+            return Notification?.permission ?? 'default';
+        } catch {
+            return 'unsupported';
         }
-      } catch {}
-    }, remaining);
-  }
+    });
+    const [showAdd, setShowAdd] = useState(false);
 
-  function editTask(plateId, taskId, text) {
-    setData(d => ({
-      ...d,
-      plates: d.plates.map(p => p.id === plateId
-        ? { ...p, tasks: p.tasks.map(t => t.id === taskId ? { ...t, text } : t) }
-        : p
-      )
-    }));
-  }
+    // Persist
+    useEffect(() => {
+        saveData(data);
+    }, [data]);
 
-  function addTask(plateId, text) {
-    setData(d => ({
-      ...d,
-      plates: d.plates.map(p => p.id === plateId ? { ...p, tasks: [...p.tasks, { id: newId(), text, done: false }] } : p)
-    }));
-  }
+    // Notifications at 9am and 2pm if any plates are still active
+    useEffect(() => {
+        if (notifStatus !== 'granted') return;
+        function checkNotif() {
+            const now = new Date();
+            const today = getTodayStr();
+            const hour = now.getHours();
+            const state = getNotifState();
+            const fired = state.date === today ? state : { date: today, morning: false, afternoon: false };
+            const active = data.plates.filter((p) => !isDismissedToday(p));
+            if (active.length === 0) return;
+            let updated = { ...fired };
+            let shouldFire = false;
+            if (hour >= 9 && hour < 14 && !fired.morning) {
+                updated.morning = true;
+                shouldFire = true;
+            } else if (hour >= 14 && !fired.afternoon) {
+                updated.afternoon = true;
+                shouldFire = true;
+            }
+            if (!shouldFire) return;
+            saveNotifState(updated);
+            try {
+                new Notification('Aloft', {
+                    body: `${active.length} plate${active.length > 1 ? 's' : ''} still need attention.`,
+                    icon: '/favicon.ico',
+                });
+            } catch {
+                /* not supported */
+            }
+        }
+        checkNotif();
+        const interval = setInterval(checkNotif, 60 * 1000);
+        return () => clearInterval(interval);
+    }, [notifStatus, data.plates]);
 
-  function toggleTask(plateId, taskId) {
-    setData(d => ({
-      ...d,
-      plates: d.plates.map(p => p.id === plateId
-        ? { ...p, tasks: p.tasks.map(t => t.id === taskId ? { ...t, done: !t.done } : t) }
-        : p
-      )
-    }));
-  }
+    function requestNotif() {
+        try {
+            Notification.requestPermission().then((p) => setNotifStatus(p));
+        } catch {
+            setNotifStatus('unsupported');
+        }
+    }
 
-  function deleteTask(plateId, taskId) {
-    setData(d => ({
-      ...d,
-      plates: d.plates.map(p => p.id === plateId
-        ? { ...p, tasks: p.tasks.filter(t => t.id !== taskId) }
-        : p
-      )
-    }));
-  }
+    function addPlate(e) {
+        e.preventDefault();
+        if (!newName.trim()) return;
+        setData((d) => ({
+            ...d,
+            plates: [...d.plates, { id: newId(), name: newName.trim(), tasks: [], dismissedOn: null }],
+        }));
+        setNewName('');
+        setShowAdd(false);
+    }
 
-  const today = getTodayStr();
-  const active = data.plates.filter(p => !isDismissedToday(p));
-  const done = data.plates.filter(p => isDismissedToday(p));
+    function deletePlate(id) {
+        setData((d) => ({ ...d, plates: d.plates.filter((p) => p.id !== id) }));
+    }
 
-  return (
-    <>
-      <style>{`
+    function dismissPlate(id) {
+        setData((d) => ({
+            ...d,
+            plates: d.plates.map((p) => (p.id === id ? { ...p, dismissedOn: getTodayStr() } : p)),
+        }));
+    }
+
+    function renamePlate(id, name) {
+        setData((d) => ({ ...d, plates: d.plates.map((p) => (p.id === id ? { ...p, name } : p)) }));
+    }
+
+    function undoDismiss(id) {
+        setData((d) => ({ ...d, plates: d.plates.map((p) => (p.id === id ? { ...p, dismissedOn: null } : p)) }));
+    }
+
+    function snoozePlate(id, ms) {
+        const until =
+            ms === null
+                ? (() => {
+                      const d = new Date();
+                      d.setHours(24, 0, 0, 0);
+                      return d.getTime();
+                  })()
+                : Date.now() + ms;
+        setData((d) => ({
+            ...d,
+            plates: d.plates.map((p) => (p.id === id ? { ...p, snoozedUntil: until, dismissedOn: null } : p)),
+        }));
+        // Schedule wake notification
+        const remaining = until - Date.now();
+        setTimeout(() => {
+            try {
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                    new Notification('Aloft', { body: `Time to check back in.` });
+                }
+            } catch {}
+        }, remaining);
+    }
+
+    function editTask(plateId, taskId, text) {
+        setData((d) => ({
+            ...d,
+            plates: d.plates.map((p) =>
+                p.id === plateId ? { ...p, tasks: p.tasks.map((t) => (t.id === taskId ? { ...t, text } : t)) } : p,
+            ),
+        }));
+    }
+
+    function addTask(plateId, text) {
+        setData((d) => ({
+            ...d,
+            plates: d.plates.map((p) =>
+                p.id === plateId ? { ...p, tasks: [...p.tasks, { id: newId(), text, done: false }] } : p,
+            ),
+        }));
+    }
+
+    function toggleTask(plateId, taskId) {
+        setData((d) => ({
+            ...d,
+            plates: d.plates.map((p) =>
+                p.id === plateId
+                    ? { ...p, tasks: p.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) }
+                    : p,
+            ),
+        }));
+    }
+
+    function deleteTask(plateId, taskId) {
+        setData((d) => ({
+            ...d,
+            plates: d.plates.map((p) =>
+                p.id === plateId ? { ...p, tasks: p.tasks.filter((t) => t.id !== taskId) } : p,
+            ),
+        }));
+    }
+
+    const today = getTodayStr();
+    const active = data.plates.filter((p) => !isDismissedToday(p));
+    const done = data.plates.filter((p) => isDismissedToday(p));
+
+    return (
+        <>
+            <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -908,101 +1019,116 @@ export default function App() {
         }
       `}</style>
 
-      <div className="app">
-        <div className="header">
-          <div className="header-left">
-            <h1>aloft</h1>
-            <div className="date">{new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</div>
-          </div>
-          <div className="header-right">
-            <span className="progress-text">
-              <span>{done.length}</span>/{data.plates.length}
-            </span>
-            {notifStatus !== "unsupported" && (
-            <button
-              className={`notif-btn ${notifStatus === "granted" ? "granted" : ""}`}
-              onClick={requestNotif}
-              title="Enable daily notifications"
-            >
-              <IconBell />
-              {notifStatus === "granted" ? "on" : "notify"}
-            </button>
-            )}
-          </div>
-        </div>
+            <div className="app">
+                <div className="header">
+                    <div className="header-left">
+                        <h1>aloft</h1>
+                        <div className="date">
+                            {new Date().toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                month: 'short',
+                                day: 'numeric',
+                            })}
+                        </div>
+                    </div>
+                    <div className="header-right">
+                        <span className="progress-text">
+                            <span>{done.length}</span>/{data.plates.length}
+                        </span>
+                        {notifStatus !== 'unsupported' && (
+                            <button
+                                className={`notif-btn ${notifStatus === 'granted' ? 'granted' : ''}`}
+                                onClick={requestNotif}
+                                title="Enable daily notifications"
+                            >
+                                <IconBell />
+                                {notifStatus === 'granted' ? 'on' : 'notify'}
+                            </button>
+                        )}
+                    </div>
+                </div>
 
-        {/* Active plates */}
-        {active.length > 0 && (
-          <>
-            <div className="section-label">needs attention</div>
-            {active.map(plate => (
-              <PlateCard
-                key={plate.id}
-                plate={plate}
-                onDismiss={dismissPlate}
-                onUndoDismiss={undoDismiss}
-                onSnooze={snoozePlate}
-                onAddTask={addTask}
-                onToggleTask={toggleTask}
-                onDeleteTask={deleteTask}
-                onDelete={deletePlate}
-                onRenamePlate={renamePlate}
-                onEditTask={editTask}
-              />
-            ))}
-          </>
-        )}
+                {/* Active plates */}
+                {active.length > 0 && (
+                    <>
+                        <div className="section-label">needs attention</div>
+                        {active.map((plate) => (
+                            <PlateCard
+                                key={plate.id}
+                                plate={plate}
+                                onDismiss={dismissPlate}
+                                onUndoDismiss={undoDismiss}
+                                onSnooze={snoozePlate}
+                                onAddTask={addTask}
+                                onToggleTask={toggleTask}
+                                onDeleteTask={deleteTask}
+                                onDelete={deletePlate}
+                                onRenamePlate={renamePlate}
+                                onEditTask={editTask}
+                            />
+                        ))}
+                    </>
+                )}
 
-        {/* Done plates */}
-        {done.length > 0 && (
-          <>
-            {done.length === data.plates.length && active.length === 0 && (
-              <div className="all-done-banner">✓ all plates spun for today</div>
-            )}
-            <div className="section-label">done today</div>
-            {done.map(plate => (
-              <PlateCard
-                key={plate.id}
-                plate={plate}
-                onDismiss={dismissPlate}
-                onUndoDismiss={undoDismiss}
-                onSnooze={snoozePlate}
-                onAddTask={addTask}
-                onToggleTask={toggleTask}
-                onDeleteTask={deleteTask}
-                onDelete={deletePlate}
-                onRenamePlate={renamePlate}
-                onEditTask={editTask}
-              />
-            ))}
-          </>
-        )}
+                {/* Done plates */}
+                {done.length > 0 && (
+                    <>
+                        {done.length === data.plates.length && active.length === 0 && (
+                            <div className="all-done-banner">✓ all plates spun for today</div>
+                        )}
+                        <div className="section-label">done today</div>
+                        {done.map((plate) => (
+                            <PlateCard
+                                key={plate.id}
+                                plate={plate}
+                                onDismiss={dismissPlate}
+                                onUndoDismiss={undoDismiss}
+                                onSnooze={snoozePlate}
+                                onAddTask={addTask}
+                                onToggleTask={toggleTask}
+                                onDeleteTask={deleteTask}
+                                onDelete={deletePlate}
+                                onRenamePlate={renamePlate}
+                                onEditTask={editTask}
+                            />
+                        ))}
+                    </>
+                )}
 
-        {data.plates.length === 0 && (
-          <div className="empty-state">no plates yet — add one below</div>
-        )}
+                {data.plates.length === 0 && <div className="empty-state">no plates yet — add one below</div>}
 
-        {/* Add plate */}
-        <div className="add-plate-area">
-          {showAdd ? (
-            <form className="add-plate-form" onSubmit={addPlate}>
-              <input
-                className="plate-name-input"
-                placeholder="Plate name..."
-                value={newName}
-                autoFocus
-                onChange={e => setNewName(e.target.value)}
-              />
-              <button type="button" className="cancel-btn" onClick={() => { setShowAdd(false); setNewName(""); }}>Cancel</button>
-              <button type="submit" className="create-btn" disabled={!newName.trim()}>Add</button>
-            </form>
-          ) : (
-            <button className="add-plate-btn" onClick={() => setShowAdd(true)}>
-              <IconPlus /> Add plate
-            </button>
-          )}
-        </div>
-      </div>
-    </>
-  );
+                {/* Add plate */}
+                <div className="add-plate-area">
+                    {showAdd ? (
+                        <form className="add-plate-form" onSubmit={addPlate}>
+                            <input
+                                className="plate-name-input"
+                                placeholder="Plate name..."
+                                value={newName}
+                                autoFocus
+                                onChange={(e) => setNewName(e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                className="cancel-btn"
+                                onClick={() => {
+                                    setShowAdd(false);
+                                    setNewName('');
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button type="submit" className="create-btn" disabled={!newName.trim()}>
+                                Add
+                            </button>
+                        </form>
+                    ) : (
+                        <button className="add-plate-btn" onClick={() => setShowAdd(true)}>
+                            <IconPlus /> Add plate
+                        </button>
+                    )}
+                </div>
+            </div>
+        </>
+    );
 }

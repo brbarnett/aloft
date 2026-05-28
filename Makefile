@@ -1,4 +1,4 @@
-.PHONY: install dev build typecheck clean preview
+.PHONY: install dev build typecheck lint fix clean preview
 
 install:
 	pnpm install
@@ -14,6 +14,13 @@ typecheck:
 
 preview:
 	pnpm --filter @aloft/web preview
+
+lint:
+	pnpm format:check
+	pnpm -r --if-present run typecheck
+
+fix:
+	pnpm format
 
 clean:
 	find . -name 'dist' -not -path '*/node_modules/*' -exec rm -rf {} +

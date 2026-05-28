@@ -21,10 +21,11 @@ aloft/
 ```
 
 `pnpm-workspace.yaml`:
+
 ```yaml
 packages:
-  - 'apps/*'
-  - 'packages/*'
+    - 'apps/*'
+    - 'packages/*'
 ```
 
 The `packages/types` stub is created now so import paths never need updating when the backend arrives. The `apps/api` stub is a `README.md` placeholder only.
@@ -62,21 +63,21 @@ apps/web/
 Tailwind CSS v4 everywhere possible. `src/index.css` contains only:
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 ```
 
 **Colour mapping from prototype to Tailwind defaults:**
 
-| Role | Prototype hex | Tailwind token |
-|------|--------------|----------------|
-| App background | `#0f0f0f` | `bg-zinc-950` |
-| Card background | `#181818` | `bg-zinc-900` |
-| Card border | `#2c2c2c` | `border-zinc-800` |
-| Primary text | `#e8e4dc` | `text-zinc-100` |
-| Muted text | `#555` | `text-zinc-500` |
-| Accent green | `#c8f5a0` | `text-lime-300` / `bg-lime-300` |
-| Snooze purple | `#7a6fff` | `text-violet-400` / `bg-violet-400` |
+| Role            | Prototype hex | Tailwind token                      |
+| --------------- | ------------- | ----------------------------------- |
+| App background  | `#0f0f0f`     | `bg-zinc-950`                       |
+| Card background | `#181818`     | `bg-zinc-900`                       |
+| Card border     | `#2c2c2c`     | `border-zinc-800`                   |
+| Primary text    | `#e8e4dc`     | `text-zinc-100`                     |
+| Muted text      | `#555`        | `text-zinc-500`                     |
+| Accent green    | `#c8f5a0`     | `text-lime-300` / `bg-lime-300`     |
+| Snooze purple   | `#7a6fff`     | `text-violet-400` / `bg-violet-400` |
 
 Raw CSS is acceptable as a fallback only for values Tailwind's utility scale cannot express (e.g. specific `box-shadow` glow values).
 
@@ -95,8 +96,8 @@ No build step. `package.json` exports the TypeScript source directly:
 
 ```json
 {
-  "name": "@aloft/types",
-  "exports": { ".": "./src/index.ts" }
+    "name": "@aloft/types",
+    "exports": { ".": "./src/index.ts" }
 }
 ```
 
@@ -106,21 +107,21 @@ Vite resolves `.ts` source from workspace packages natively, so no compilation n
 
 ```ts
 export interface Task {
-  id: string;
-  text: string;
-  done: boolean;
+    id: string;
+    text: string;
+    done: boolean;
 }
 
 export interface Plate {
-  id: string;
-  name: string;
-  tasks: Task[];
-  dismissedOn: string | null;   // "YYYY-MM-DD" or null
-  snoozedUntil: number | null;  // unix ms or null
+    id: string;
+    name: string;
+    tasks: Task[];
+    dismissedOn: string | null; // "YYYY-MM-DD" or null
+    snoozedUntil: number | null; // unix ms or null
 }
 
 export interface AppData {
-  plates: Plate[];
+    plates: Plate[];
 }
 ```
 
@@ -134,10 +135,10 @@ export interface AppData {
 
 ```js
 self.addEventListener('message', (event) => {
-  if (event.data?.type === 'SCHEDULE_NOTIFICATION') {
-    const { title, body, delayMs } = event.data;
-    setTimeout(() => self.registration.showNotification(title, { body }), delayMs);
-  }
+    if (event.data?.type === 'SCHEDULE_NOTIFICATION') {
+        const { title, body, delayMs } = event.data;
+        setTimeout(() => self.registration.showNotification(title, { body }), delayMs);
+    }
 });
 ```
 
