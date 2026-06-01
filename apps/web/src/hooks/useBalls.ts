@@ -1,4 +1,5 @@
 import type { Ball } from '@aloft/types';
+export { useBalls } from '../context/BallsContext';
 
 export const getTodayStr = (): string => new Date().toISOString().split('T')[0];
 
