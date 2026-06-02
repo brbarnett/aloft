@@ -11,20 +11,20 @@ Transform the "juggling balls" concept into an ATC (Air Traffic Control) themed 
 
 Everything is a rename or reshaping of existing code. No new external dependencies. The storage key is preserved (`aloft-data`) so existing user data survives the migration.
 
-| Before | After |
-|--------|-------|
-| Ball | Flight |
-| Task | Waypoint (type stays `Task` in storage for compatibility) |
-| BallCard | FlightStrip |
-| BallsContext | FlightsContext |
-| useBalls | useFlights |
-| TaskList | WaypointList |
-| BallCardActions | FlightStripActions |
-| "in the air" | `// AIRBORNE` |
-| "done today" | `// CLEARED TODAY` |
-| dismiss | clear to land |
-| snooze | hold pattern |
-| Add ball | Squawk new flight |
+| Before          | After                                                     |
+| --------------- | --------------------------------------------------------- |
+| Ball            | Flight                                                    |
+| Task            | Waypoint (type stays `Task` in storage for compatibility) |
+| BallCard        | FlightStrip                                               |
+| BallsContext    | FlightsContext                                            |
+| useBalls        | useFlights                                                |
+| TaskList        | WaypointList                                              |
+| BallCardActions | FlightStripActions                                        |
+| "in the air"    | `// AIRBORNE`                                             |
+| "done today"    | `// CLEARED TODAY`                                        |
+| dismiss         | clear to land                                             |
+| snooze          | hold pattern                                              |
+| Add ball        | Squawk new flight                                         |
 
 ## Data Model
 
@@ -32,23 +32,23 @@ Defined in `packages/types/src/index.ts`:
 
 ```ts
 export interface Task {
-  id: string
-  text: string
-  done: boolean
+    id: string;
+    text: string;
+    done: boolean;
 }
 
 export interface Flight {
-  id: string
-  callsign: string       // auto-generated on creation, stored permanently
-  name: string
-  tasks: Task[]          // called "waypoints" in the UI
-  note: string | null    // sticky pilot note, persists across days
-  dismissedOn: string | null
-  snoozedUntil: number | null
+    id: string;
+    callsign: string; // auto-generated on creation, stored permanently
+    name: string;
+    tasks: Task[]; // called "waypoints" in the UI
+    note: string | null; // sticky pilot note, persists across days
+    dismissedOn: string | null;
+    snoozedUntil: number | null;
 }
 
 export interface AppData {
-  flights: Flight[]
+    flights: Flight[];
 }
 ```
 
@@ -59,6 +59,7 @@ export interface AppData {
 On `addFlight`, a callsign is auto-generated from the flight name and stored permanently on the flight record. It is never regenerated.
 
 Algorithm (`utils/callsign.ts`):
+
 1. Split the name on whitespace, take the first letter of each word, uppercase, take up to 3 chars. Pad with `X` if fewer than 3 words. e.g. "Q4 Strategy" → `QST`, "Hiring Loop" → `HLX`, "Infra" → `IXX`.
 2. Append a dash and a zero-padded random number 01–99. e.g. `QST-04`, `HLX-12`.
 
@@ -71,6 +72,7 @@ Snooze (`snoozeFlight`) does not prune waypoints — the flight returns in a few
 ## Visual Theme
 
 **Palette:**
+
 - Background: `#060e06`
 - Active text / elements: `#6ee77c`, `#4ade80`
 - Dim text / borders: `#2a5c2a`, `#1d4d1d`
@@ -79,6 +81,7 @@ Snooze (`snoozeFlight`) does not prune waypoints — the flight returns in a few
 **Typography:** `'Courier New', monospace` throughout.
 
 **Atmospheric effects:**
+
 - Scanlines: `repeating-linear-gradient`, ~7% opacity
 - Vignette: radial gradient, 45% edge darkening
 
@@ -124,6 +127,7 @@ Each strip is a horizontal row inside the rack. Layout columns:
 Clicking a non-cleared strip toggles inline expansion below the strip row. Cleared strips are not expandable — they show only callsign, name, and landed time. To access a cleared flight's note or waypoints, use undo dismiss.
 
 **Expanded state** shows:
+
 - Full waypoint list with checkboxes (indent aligned under main column)
 - Pilot note (editable inline via click-to-edit)
 - Action row: `⏱ HOLD PATTERN` · `+ WAYPOINT` · `✈ CLEAR TO LAND`
@@ -159,22 +163,22 @@ src/
 
 ```ts
 interface FlightsContextValue {
-  data: AppData
-  active: Flight[]           // not dismissed today
-  done: Flight[]             // dismissed today
-  notificationStatus: string
-  requestNotification: () => void
-  addFlight: (name: string) => void
-  deleteFlight: (id: string) => void
-  dismissFlight: (id: string) => void   // clears to land — prunes done waypoints, sets dismissedOn
-  undoDismiss: (id: string) => void
-  snoozeFlight: (id: string, ms: number | null) => void
-  renameFlight: (id: string, name: string) => void
-  setNote: (id: string, note: string | null) => void
-  addWaypoint: (flightId: string, text: string) => void
-  toggleWaypoint: (flightId: string, taskId: string) => void
-  deleteWaypoint: (flightId: string, taskId: string) => void
-  editWaypoint: (flightId: string, taskId: string, text: string) => void
+    data: AppData;
+    active: Flight[]; // not dismissed today
+    done: Flight[]; // dismissed today
+    notificationStatus: string;
+    requestNotification: () => void;
+    addFlight: (name: string) => void;
+    deleteFlight: (id: string) => void;
+    dismissFlight: (id: string) => void; // clears to land — prunes done waypoints, sets dismissedOn
+    undoDismiss: (id: string) => void;
+    snoozeFlight: (id: string, ms: number | null) => void;
+    renameFlight: (id: string, name: string) => void;
+    setNote: (id: string, note: string | null) => void;
+    addWaypoint: (flightId: string, text: string) => void;
+    toggleWaypoint: (flightId: string, taskId: string) => void;
+    deleteWaypoint: (flightId: string, taskId: string) => void;
+    editWaypoint: (flightId: string, taskId: string, text: string) => void;
 }
 ```
 
