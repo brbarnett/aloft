@@ -1,9 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { BallsProvider } from './context/BallsContext';
 import './index.css';
 import { registerServiceWorker } from './utils/notifications';
-import { BallsProvider } from './context/BallsContext';
 
 registerServiceWorker();
 

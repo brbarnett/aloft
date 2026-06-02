@@ -22,23 +22,7 @@ const IconBell = () => (
 const App = () => {
     const [newName, setNewName] = useState('');
     const [showAdd, setShowAdd] = useState(false);
-    const {
-        data,
-        active,
-        done,
-        notificationStatus,
-        requestNotification,
-        addBall,
-        deleteBall,
-        dismissBall,
-        undoDismiss,
-        snoozeBall,
-        renameBall,
-        addTask,
-        toggleTask,
-        deleteTask,
-        editTask,
-    } = useBalls();
+    const { data, active, done, notificationStatus, requestNotification, addBall } = useBalls();
 
     const handleAddBall = (e: React.FormEvent) => {
         e.preventDefault();
@@ -89,19 +73,7 @@ const App = () => {
                             in the air
                         </div>
                         {active.map((ball) => (
-                            <BallCard
-                                key={ball.id}
-                                ball={ball}
-                                onDismiss={dismissBall}
-                                onUndoDismiss={undoDismiss}
-                                onSnooze={snoozeBall}
-                                onAddTask={addTask}
-                                onToggleTask={toggleTask}
-                                onDeleteTask={deleteTask}
-                                onDelete={deleteBall}
-                                onRenameBall={renameBall}
-                                onEditTask={editTask}
-                            />
+                            <BallCard key={ball.id} ball={ball} />
                         ))}
                     </>
                 )}
@@ -117,19 +89,7 @@ const App = () => {
                             done today
                         </div>
                         {done.map((ball) => (
-                            <BallCard
-                                key={ball.id}
-                                ball={ball}
-                                onDismiss={dismissBall}
-                                onUndoDismiss={undoDismiss}
-                                onSnooze={snoozeBall}
-                                onAddTask={addTask}
-                                onToggleTask={toggleTask}
-                                onDeleteTask={deleteTask}
-                                onDelete={deleteBall}
-                                onRenameBall={renameBall}
-                                onEditTask={editTask}
-                            />
+                            <BallCard key={ball.id} ball={ball} />
                         ))}
                     </>
                 )}

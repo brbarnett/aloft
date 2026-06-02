@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { AppData, Ball } from '@aloft/types';
+import { getTodayStr, isDismissedToday, newId } from '../hooks/useBalls';
 import { restoreSnoozedNotifications, scheduleWakeNotification } from '../utils/notifications';
 import { loadData, loadNotificationState, saveData, saveNotificationState } from '../utils/storage';
-import { getTodayStr, isDismissedToday, newId } from '../hooks/useBalls';
 
 export interface BallsContextValue {
     data: AppData;
