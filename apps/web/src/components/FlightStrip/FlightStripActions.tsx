@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import clsx from 'clsx';
 import { isDismissedToday, isSnoozed, snoozeLabel, useFlights } from '../../hooks/useFlights';
-import { IconBell, IconUndo } from './icons';
+import { IconHold, IconUndo } from './icons';
 
 const HOLD_OPTIONS: { label: string; ms: number | null }[] = [
     { label: '20 MIN', ms: 20 * 60 * 1000 },
@@ -10,7 +10,8 @@ const HOLD_OPTIONS: { label: string; ms: number | null }[] = [
     { label: 'TOMORROW', ms: null },
 ];
 
-const btnBase = 'font-mono tracking-[1px] px-3 py-[5px] cursor-pointer uppercase bg-transparent border';
+const btnBase =
+    'inline-flex items-center gap-1.5 font-mono tracking-[1px] px-3 py-[5px] cursor-pointer uppercase bg-transparent border';
 
 interface Props {
     flightId: string;
@@ -35,7 +36,7 @@ const FlightStripActions = ({ flightId }: Props) => {
                             className={clsx(btnBase, 'text-[10px] border-[#2a5c2a] text-[#2a7a2a]')}
                             onClick={() => setShowHold((v) => !v)}
                         >
-                            <IconBell /> ⏱ HOLD PATTERN
+                            <IconHold /> HOLD PATTERN
                         </button>
                         {showHold && (
                             <div className="absolute top-[calc(100%+4px)] left-0 bg-[#060e06] border border-[#1d4d1d] z-[100] min-w-[110px]">

@@ -55,6 +55,15 @@ export const IconUndo = () => (
     </svg>
 );
 
+export const IconHold = () => (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        {/* Racetrack oval — the holding pattern shape */}
+        <path d="M5.5 5h5a3 3 0 0 1 0 6h-5a3 3 0 0 1 0-6z" stroke="currentColor" strokeWidth="1.5" />
+        {/* Directional arrow — clockwise circuit */}
+        <path d="M9 3l2 2-2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+);
+
 export const IconEdit = () => (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
         <path
