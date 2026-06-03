@@ -1,1 +1,1 @@
-export type { Task, Ball, AppData } from '@aloft/types';
+export type { Task, Flight, AppData } from '@aloft/types';
