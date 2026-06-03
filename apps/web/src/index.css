@@ -5,3 +5,25 @@
     --font-sans: 'DM Sans', sans-serif;
     --font-mono: 'DM Mono', monospace;
 }
+
+.atc-scanlines {
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.07) 3px,
+        rgba(0, 0, 0, 0.07) 4px
+    );
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+}
+
+.atc-vignette {
+    background: radial-gradient(ellipse at center, transparent 65%, rgba(0, 0, 0, 0.45) 100%);
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+}
