@@ -57,11 +57,13 @@ const App = () => {
                 </div>
 
                 {/* All cleared banner */}
-                {done.length > 0 && done.length === data.flights.length && (
-                    <div className="border border-[#1a3d1a] bg-[rgba(0,20,0,0.5)] px-[14px] py-2 mt-3 text-[11px] text-[#2a7a2a] tracking-[1px] text-center">
-                        ✓ ALL FLIGHTS CLEARED FOR TODAY
-                    </div>
-                )}
+                {active.length === 0 &&
+                    done.length > 0 &&
+                    done.every((f) => !(f.snoozedUntil && f.snoozedUntil > Date.now())) && (
+                        <div className="border border-[#1a3d1a] bg-[rgba(0,20,0,0.5)] px-[14px] py-2 mt-3 text-[11px] text-[#2a7a2a] tracking-[1px] text-center">
+                            ✓ ALL FLIGHTS CLEARED FOR TODAY
+                        </div>
+                    )}
 
                 {/* Airborne section */}
                 {active.length > 0 && (
