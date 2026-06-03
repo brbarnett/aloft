@@ -28,14 +28,6 @@ export const IconTrash = () => (
     </svg>
 );
 
-export const IconSnooze = () => (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M8 5.5v3l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M5.5 1.5l-2 2M10.5 1.5l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-);
-
 export const IconBell = () => (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path
