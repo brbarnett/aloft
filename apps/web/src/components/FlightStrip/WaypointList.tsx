@@ -89,7 +89,7 @@ const WaypointList = ({ flightId }: Props) => {
         setEditingId(null);
     };
 
-    const handleAdd = (e: React.FormEvent) => {
+    const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (input.trim()) {
             addWaypoint(flightId, input.trim());
