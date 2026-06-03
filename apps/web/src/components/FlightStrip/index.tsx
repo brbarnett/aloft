@@ -30,7 +30,7 @@ const FlightStrip = ({ flight }: Props) => {
     const nextWaypoint = flight.tasks.find((t) => !t.done);
 
     // These are RUNTIME-DYNAMIC — keep as inline style
-    const accentColor = snoozed ? '#7c3aed' : dismissed ? '#1d4d1d' : '#4ade80';
+    const accentColor = dismissed && !snoozed ? '#1d4d1d' : '#4ade80';
     const nameColor = dismissed ? '#1d4d1d' : '#6ee77c';
 
     const commitRename = () => {
@@ -69,7 +69,7 @@ const FlightStrip = ({ flight }: Props) => {
                 >
                     {flight.callsign}
                     {snoozed && (
-                        <span className="text-[9px] text-[#7c3aed] block mt-[2px]">⏱ {snoozeLabel(flight)}</span>
+                        <span className="text-[9px] text-[#4ade80] block mt-[2px]">⏱ {snoozeLabel(flight)}</span>
                     )}
                 </div>
 
