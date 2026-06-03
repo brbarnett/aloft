@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import clsx from 'clsx';
 import type { Task } from '@aloft/types';
+import clsx from 'clsx';
 import { useFlights } from '../../hooks/useFlights';
 import { IconCheck, IconEdit, IconPlus, IconTrash } from './icons';
 
@@ -40,10 +40,7 @@ const WaypointList = ({ flightId }: Props) => {
     return (
         <div>
             {flight.tasks.map((task) => (
-                <div
-                    key={task.id}
-                    className="flex items-center gap-2 py-[5px] border-b border-[#0a160a]"
-                >
+                <div key={task.id} className="flex items-center gap-2 py-[5px] border-b border-[#0a160a]">
                     <button
                         className={clsx(
                             'w-[13px] h-[13px] shrink-0 flex items-center justify-center cursor-pointer text-[8px]',
@@ -71,9 +68,7 @@ const WaypointList = ({ flightId }: Props) => {
                         <span
                             className={clsx(
                                 'font-mono text-[13px] flex-1',
-                                task.done
-                                    ? 'text-[#2a5c2a] line-through'
-                                    : 'text-[#4ade80] no-underline',
+                                task.done ? 'text-[#2a5c2a] line-through' : 'text-[#4ade80] no-underline',
                             )}
                             onDoubleClick={() => !task.done && startEdit(task)}
                         >

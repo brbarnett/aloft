@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import clsx from 'clsx';
 import type { Flight } from '@aloft/types';
+import clsx from 'clsx';
 import { isDismissedToday, isSnoozed, snoozeLabel, useFlights } from '../../hooks/useFlights';
 import FlightStripActions from './FlightStripActions';
 import WaypointList from './WaypointList';
@@ -58,10 +58,7 @@ const FlightStrip = ({ flight }: Props) => {
                 onClick={() => !dismissed && !editingName && setExpanded((e) => !e)}
             >
                 {/* Accent bar */}
-                <div
-                    className="w-[5px] shrink-0 self-stretch"
-                    style={{ background: accentColor }}
-                />
+                <div className="w-[5px] shrink-0 self-stretch" style={{ background: accentColor }} />
 
                 {/* Callsign column */}
                 <div
@@ -72,9 +69,7 @@ const FlightStrip = ({ flight }: Props) => {
                 >
                     {flight.callsign}
                     {snoozed && (
-                        <span className="text-[9px] text-[#7c3aed] block mt-[2px]">
-                            ⏱ {snoozeLabel(flight)}
-                        </span>
+                        <span className="text-[9px] text-[#7c3aed] block mt-[2px]">⏱ {snoozeLabel(flight)}</span>
                     )}
                 </div>
 
@@ -115,9 +110,7 @@ const FlightStrip = ({ flight }: Props) => {
                         </div>
                     )}
                     {dismissed && (
-                        <div className="font-mono text-[10px] text-[#1d4d1d] mt-[2px]">
-                            landed · returns tomorrow
-                        </div>
+                        <div className="font-mono text-[10px] text-[#1d4d1d] mt-[2px]">landed · returns tomorrow</div>
                     )}
                 </div>
 
@@ -126,10 +119,7 @@ const FlightStrip = ({ flight }: Props) => {
                     <div className="font-mono text-[11px] text-[#2a5c2a]">
                         {doneTasks.length}/{flight.tasks.length} wpts
                     </div>
-                    <div
-                        className="flex gap-[3px]"
-                        onClick={(e) => e.stopPropagation()}
-                    >
+                    <div className="flex gap-[3px]" onClick={(e) => e.stopPropagation()}>
                         {!dismissed && (
                             <button
                                 className="bg-transparent border-none cursor-pointer text-[#2a5c2a] p-[2px] flex items-center"
@@ -158,9 +148,7 @@ const FlightStrip = ({ flight }: Props) => {
 
                         {/* Pilot note section */}
                         <div className="mt-[10px] border border-[#142814] bg-[rgba(0,8,0,0.5)] p-2 px-[10px]">
-                            <div className="font-mono text-[9px] tracking-[2px] text-[#2a5c2a] mb-1">
-                                // PILOT NOTE
-                            </div>
+                            <div className="font-mono text-[9px] tracking-[2px] text-[#2a5c2a] mb-1">// PILOT NOTE</div>
                             {editingNote ? (
                                 <textarea
                                     className="bg-transparent border-none outline-none resize-none font-mono text-[12px] text-[#4ade80] w-full leading-[1.5] opacity-85"

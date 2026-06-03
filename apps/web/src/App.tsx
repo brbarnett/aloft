@@ -39,9 +39,7 @@ const App = () => {
                             <button
                                 className={clsx(
                                     'bg-transparent border border-[#1d4d1d] font-mono text-[9px] tracking-[1px] px-2 py-[3px] cursor-pointer uppercase',
-                                    notificationStatus === 'granted'
-                                        ? 'text-[#4ade80]'
-                                        : 'text-[#2a5c2a]',
+                                    notificationStatus === 'granted' ? 'text-[#4ade80]' : 'text-[#2a5c2a]',
                                 )}
                                 onClick={requestNotification}
                             >
@@ -61,9 +59,7 @@ const App = () => {
                 {/* Airborne section */}
                 {active.length > 0 && (
                     <>
-                        <div className="text-[9px] tracking-[3px] text-[#2a5c2a] uppercase mt-5 mb-2">
-                            // AIRBORNE
-                        </div>
+                        <div className="text-[9px] tracking-[3px] text-[#2a5c2a] uppercase mt-5 mb-2">// AIRBORNE</div>
                         <div className="border border-[#1a3d1a] bg-[rgba(0,12,0,0.4)] p-[3px]">
                             {active.map((flight) => (
                                 <FlightStrip key={flight.id} flight={flight} />
