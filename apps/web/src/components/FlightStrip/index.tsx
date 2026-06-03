@@ -52,10 +52,10 @@ const FlightStrip = ({ flight }: Props) => {
                 className={clsx(
                     'flex items-stretch border border-[#1d4d1d] min-h-[52px] transition-colors',
                     expanded ? 'mb-0' : 'mb-[3px]',
-                    dismissed ? 'cursor-default' : 'cursor-pointer',
+                    'cursor-pointer',
                 )}
                 style={{ background: expanded ? 'rgba(0,22,0,0.85)' : 'rgba(0,16,0,0.7)' }}
-                onClick={() => !dismissed && !editingName && setExpanded((e) => !e)}
+                onClick={() => !editingName && setExpanded((e) => !e)}
             >
                 {/* Accent bar */}
                 <div className="w-[5px] shrink-0 self-stretch" style={{ background: accentColor }} />
@@ -141,7 +141,7 @@ const FlightStrip = ({ flight }: Props) => {
             </div>
 
             {/* Expanded panel */}
-            {expanded && !dismissed && (
+            {expanded && (
                 <div className="border border-[#1d4d1d] border-t-0 bg-[rgba(0,10,0,0.85)] mb-[3px]">
                     <div className="p-3 pb-[14px] pl-[98px]">
                         <WaypointList flightId={flight.id} />
