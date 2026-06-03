@@ -42,8 +42,14 @@ export const IconBell = () => (
 
 export const IconUndo = () => (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-        <path d="M3 7V3L1 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M3 5a6 6 0 106 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M6 11L2 7l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+            d="M2 7h9a3 3 0 0 1 0 6H9"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
     </svg>
 );
 
