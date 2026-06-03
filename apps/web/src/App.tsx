@@ -32,10 +32,8 @@ const App = () => {
                     <span className="text-[20px] text-[#6ee77c] tracking-[5px]">ALOFT TRACON</span>
                     <div className="flex gap-3 items-center">
                         <span className="text-[11px] text-[#2a5c2a] tracking-[1px]">
-                            {dateStr} &nbsp;
-                            <span className="text-[#4ade80]">{done.length}</span>
-                            {'/'}
-                            <span className="text-[#4ade80]">{data.flights.length}</span>
+                            {dateStr} &nbsp;·&nbsp; <span className="text-[#4ade80]">{active.length}</span> AIRBORNE
+                            &nbsp;·&nbsp; <span className="text-[#4ade80]">{done.length}</span> CLEARED
                         </span>
                         {notificationStatus !== 'unsupported' && (
                             <button
