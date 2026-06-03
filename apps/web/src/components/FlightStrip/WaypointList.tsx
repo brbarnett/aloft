@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import clsx from 'clsx';
 import type { Task } from '@aloft/types';
 import { useFlights } from '../../hooks/useFlights';
 import { IconCheck, IconEdit, IconPlus, IconTrash } from './icons';
@@ -6,67 +7,6 @@ import { IconCheck, IconEdit, IconPlus, IconTrash } from './icons';
 interface Props {
     flightId: string;
 }
-
-const S = {
-    row: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '5px 0',
-        borderBottom: '1px solid #0a160a',
-    } as React.CSSProperties,
-    checkbox: (done: boolean): React.CSSProperties => ({
-        width: '13px',
-        height: '13px',
-        border: `1px solid ${done ? '#4ade80' : '#2a5c2a'}`,
-        background: done ? 'rgba(74,222,128,0.1)' : 'transparent',
-        flexShrink: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        color: done ? '#4ade80' : 'transparent',
-        fontSize: '8px',
-    }),
-    text: (done: boolean): React.CSSProperties => ({
-        fontFamily: "'Courier New', monospace",
-        fontSize: '13px',
-        flex: 1,
-        color: done ? '#2a5c2a' : '#4ade80',
-        textDecoration: done ? 'line-through' : 'none',
-    }),
-    iconBtn: {
-        background: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        color: '#2a5c2a',
-        padding: '2px',
-        display: 'flex',
-        alignItems: 'center',
-    } as React.CSSProperties,
-    input: {
-        background: 'rgba(0,8,0,0.6)',
-        border: '1px solid #2a5c2a',
-        color: '#4ade80',
-        fontFamily: "'Courier New', monospace",
-        fontSize: '13px',
-        padding: '2px 6px',
-        flex: 1,
-        outline: 'none',
-    } as React.CSSProperties,
-    addRow: { display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' } as React.CSSProperties,
-    addInput: {
-        background: 'rgba(0,8,0,0.6)',
-        border: '1px solid #1d4d1d',
-        borderBottom: '1px solid #2a5c2a',
-        color: '#4ade80',
-        fontFamily: "'Courier New', monospace",
-        fontSize: '12px',
-        padding: '3px 6px',
-        flex: 1,
-        outline: 'none',
-    } as React.CSSProperties,
-};
 
 const WaypointList = ({ flightId }: Props) => {
     const { data, addWaypoint, toggleWaypoint, deleteWaypoint, editWaypoint } = useFlights();
@@ -100,13 +40,24 @@ const WaypointList = ({ flightId }: Props) => {
     return (
         <div>
             {flight.tasks.map((task) => (
-                <div key={task.id} style={S.row}>
-                    <button style={S.checkbox(task.done)} onClick={() => toggleWaypoint(flightId, task.id)}>
+                <div
+                    key={task.id}
+                    className="flex items-center gap-2 py-[5px] border-b border-[#0a160a]"
+                >
+                    <button
+                        className={clsx(
+                            'w-[13px] h-[13px] shrink-0 flex items-center justify-center cursor-pointer text-[8px]',
+                            task.done
+                                ? 'border border-[#4ade80] bg-[rgba(74,222,128,0.1)] text-[#4ade80]'
+                                : 'border border-[#2a5c2a] bg-transparent text-transparent',
+                        )}
+                        onClick={() => toggleWaypoint(flightId, task.id)}
+                    >
                         {task.done && <IconCheck />}
                     </button>
                     {editingId === task.id ? (
                         <input
-                            style={S.input}
+                            className="bg-[rgba(0,8,0,0.6)] border border-[#2a5c2a] text-[#4ade80] font-mono text-[13px] px-[6px] py-[2px] flex-1 outline-none"
                             value={editingVal}
                             autoFocus
                             onChange={(e) => setEditingVal(e.target.value)}
@@ -117,21 +68,31 @@ const WaypointList = ({ flightId }: Props) => {
                             }}
                         />
                     ) : (
-                        <span style={S.text(task.done)} onDoubleClick={() => !task.done && startEdit(task)}>
+                        <span
+                            className={clsx(
+                                'font-mono text-[13px] flex-1',
+                                task.done
+                                    ? 'text-[#2a5c2a] line-through'
+                                    : 'text-[#4ade80] no-underline',
+                            )}
+                            onDoubleClick={() => !task.done && startEdit(task)}
+                        >
                             {task.text}
                         </span>
                     )}
                     {editingId !== task.id && (
                         <>
                             {!task.done && (
-                                <button style={S.iconBtn} onClick={() => startEdit(task)} title="Edit">
+                                <button
+                                    className="bg-transparent border-none cursor-pointer text-[#2a5c2a] p-[2px] flex items-center"
+                                    onClick={() => startEdit(task)}
+                                    title="Edit"
+                                >
                                     <IconEdit />
                                 </button>
                             )}
                             <button
-                                style={{ ...S.iconBtn, color: '#3a1a1a' }}
-                                onMouseEnter={(e) => (e.currentTarget.style.color = '#dc2626')}
-                                onMouseLeave={(e) => (e.currentTarget.style.color = '#3a1a1a')}
+                                className="bg-transparent border-none cursor-pointer text-[#3a1a1a] hover:text-[#dc2626] p-[2px] flex items-center"
                                 onClick={() => deleteWaypoint(flightId, task.id)}
                             >
                                 <IconTrash />
@@ -140,16 +101,19 @@ const WaypointList = ({ flightId }: Props) => {
                     )}
                 </div>
             ))}
-            <form style={S.addRow} onSubmit={handleAdd}>
+            <form className="flex items-center gap-[6px] mt-[6px]" onSubmit={handleAdd}>
                 <input
-                    style={S.addInput}
+                    className="bg-[rgba(0,8,0,0.6)] border border-[#1d4d1d] border-b-[#2a5c2a] text-[#4ade80] font-mono text-[12px] px-[6px] py-[3px] flex-1 outline-none"
                     placeholder="+ ADD WAYPOINT..."
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                 />
                 <button
                     type="submit"
-                    style={{ ...S.iconBtn, color: input.trim() ? '#4ade80' : '#1d4d1d' }}
+                    className={clsx(
+                        'bg-transparent border-none cursor-pointer p-[2px] flex items-center',
+                        input.trim() ? 'text-[#4ade80]' : 'text-[#1d4d1d]',
+                    )}
                     disabled={!input.trim()}
                 >
                     <IconPlus />
