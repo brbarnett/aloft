@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import { BallsProvider } from './context/BallsContext';
+import { FlightsProvider } from './context/FlightsContext';
 import './index.css';
 import { registerServiceWorker } from './utils/notifications';
 
@@ -9,8 +9,8 @@ registerServiceWorker();
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <BallsProvider>
+        <FlightsProvider>
             <App />
-        </BallsProvider>
+        </FlightsProvider>
     </StrictMode>,
 );

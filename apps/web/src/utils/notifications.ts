@@ -1,4 +1,4 @@
-import type { Ball } from '@aloft/types';
+import type { Flight } from '@aloft/types';
 
 export const registerServiceWorker = (): void => {
     if ('serviceWorker' in navigator) {
@@ -6,9 +6,9 @@ export const registerServiceWorker = (): void => {
     }
 };
 
-export const scheduleWakeNotification = (ball: Ball): void => {
-    if (!ball.snoozedUntil) return;
-    const delayMs = ball.snoozedUntil - Date.now();
+export const scheduleWakeNotification = (flight: Flight): void => {
+    if (!flight.snoozedUntil) return;
+    const delayMs = flight.snoozedUntil - Date.now();
     if (delayMs <= 0) return;
     navigator.serviceWorker.ready.then((reg) => {
         reg.active?.postMessage({
@@ -20,6 +20,6 @@ export const scheduleWakeNotification = (ball: Ball): void => {
     });
 };
 
-export const restoreSnoozedNotifications = (balls: Ball[]): void => {
-    balls.filter((b) => b.snoozedUntil && b.snoozedUntil > Date.now()).forEach(scheduleWakeNotification);
+export const restoreSnoozedNotifications = (flights: Flight[]): void => {
+    flights.filter((f) => f.snoozedUntil && f.snoozedUntil > Date.now()).forEach(scheduleWakeNotification);
 };
