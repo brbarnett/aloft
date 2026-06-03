@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import clsx from 'clsx';
 import FlightStrip from './components/FlightStrip';
+import { IconBell } from './components/FlightStrip/icons';
 import { useFlights } from './hooks/useFlights';
 
 const App = () => {
@@ -38,12 +39,18 @@ const App = () => {
                         {notificationStatus !== 'unsupported' && (
                             <button
                                 className={clsx(
-                                    'bg-transparent border border-[#1d4d1d] font-mono text-[9px] tracking-[1px] px-2 py-[3px] cursor-pointer uppercase',
+                                    'inline-flex items-center gap-1 bg-transparent border border-[#1d4d1d] font-mono text-[9px] tracking-[1px] px-2 py-[3px] cursor-pointer uppercase',
                                     notificationStatus === 'granted' ? 'text-[#4ade80]' : 'text-[#2a5c2a]',
                                 )}
                                 onClick={requestNotification}
                             >
-                                {notificationStatus === 'granted' ? '🔔 ON' : 'NOTIFY'}
+                                {notificationStatus === 'granted' ? (
+                                    <>
+                                        <IconBell /> ON
+                                    </>
+                                ) : (
+                                    'NOTIFY'
+                                )}
                             </button>
                         )}
                     </div>

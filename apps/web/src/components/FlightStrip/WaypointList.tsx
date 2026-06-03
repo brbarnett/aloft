@@ -87,7 +87,7 @@ const WaypointList = ({ flightId }: Props) => {
                                 </button>
                             )}
                             <button
-                                className="bg-transparent border-none cursor-pointer text-[#3a1a1a] hover:text-[#dc2626] p-[2px] flex items-center"
+                                className="bg-transparent border-none cursor-pointer text-[#2a5c2a] hover:text-[#4ade80] p-[2px] flex items-center"
                                 onClick={() => deleteWaypoint(flightId, task.id)}
                             >
                                 <IconTrash />
