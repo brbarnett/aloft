@@ -4,14 +4,16 @@ export interface Task {
     done: boolean;
 }
 
-export interface Ball {
+export interface Flight {
     id: string;
+    callsign: string;
     name: string;
     tasks: Task[];
+    note: string | null;
     dismissedOn: string | null;
     snoozedUntil: number | null;
 }
 
 export interface AppData {
-    balls: Ball[];
+    flights: Flight[];
 }
