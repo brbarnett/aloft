@@ -11,16 +11,31 @@ export interface NotificationState {
 
 export const loadData = (): AppData => {
     try {
-        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') || { balls: [] };
-        return {
-            balls: (raw.balls ?? []).map((b: Record<string, unknown>) => ({
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') || {};
+
+        // One-time migration: rename balls → flights, add callsign/note defaults
+        if (Array.isArray(raw.balls) && !raw.flights) {
+            raw.flights = raw.balls.map((b: Record<string, unknown>) => ({
                 ...b,
+                callsign: (b.callsign as string | undefined) ?? 'XXX-00',
+                note: (b.note as string | null | undefined) ?? null,
                 snoozedUntil: (b.snoozedUntil as number | null | undefined) ?? null,
                 dismissedOn: (b.dismissedOn as string | null | undefined) ?? null,
+            }));
+            delete raw.balls;
+        }
+
+        return {
+            flights: (raw.flights ?? []).map((f: Record<string, unknown>) => ({
+                ...f,
+                callsign: (f.callsign as string | undefined) ?? 'XXX-00',
+                note: (f.note as string | null | undefined) ?? null,
+                snoozedUntil: (f.snoozedUntil as number | null | undefined) ?? null,
+                dismissedOn: (f.dismissedOn as string | null | undefined) ?? null,
             })),
         };
     } catch {
-        return { balls: [] };
+        return { flights: [] };
     }
 };
 
