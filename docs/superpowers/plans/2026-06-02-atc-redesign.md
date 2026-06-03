@@ -6,7 +6,7 @@
 
 **Architecture:** All changes are renames and reshaping of existing code — `Ball` → `Flight`, `BallCard` → `FlightStrip` (horizontal strip layout), `BallsContext` → `FlightsContext`. The storage key (`aloft_v1`) and `Task` type are preserved for backward compatibility. A storage migration runs once on load to rename `balls` → `flights` and add `callsign`/`note` defaults to existing records.
 
-**Tech Stack:** React 19, TypeScript, Vite 8, Tailwind CSS v4, Vitest (added), pnpm workspaces
+**Tech Stack:** React 19, TypeScript, Vite 8, Tailwind CSS v4, pnpm workspaces
 
 ---
 
@@ -15,19 +15,15 @@
 | Action | Path                                                         | Responsibility                                                                  |
 | ------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------- |
 | Modify | `packages/types/src/index.ts`                                | Rename `Ball`→`Flight`, add `callsign`/`note`, rename `AppData.balls`→`flights` |
-| Create | `apps/web/src/utils/callsign.ts`                             | `generateCallsign(name)` pure function                                          |
-| Create | `apps/web/src/utils/callsign.test.ts`                        | Unit tests for callsign generation                                              |
-| Create | `apps/web/src/utils/prune.ts`                                | `pruneCompletedWaypoints(flight)` pure function                                 |
-| Create | `apps/web/src/utils/prune.test.ts`                           | Unit tests for waypoint pruning                                                 |
 | Modify | `apps/web/src/utils/storage.ts`                              | Load/save `flights`, run one-time migration from `balls`                        |
-| Create | `apps/web/src/context/FlightsContext.tsx`                    | All flight state + actions (was BallsContext)                                   |
+| Create | `apps/web/src/context/FlightsContext.tsx`                    | All flight state + actions + `generateCallsign` (was BallsContext)              |
 | Create | `apps/web/src/hooks/useFlights.ts`                           | Re-export `useFlights` + helpers (was useBalls)                                 |
 | Modify | `apps/web/src/types.ts`                                      | Re-export `Flight`, `Task`, `AppData`                                           |
 | Create | `apps/web/src/components/FlightStrip/icons.tsx`              | Copy of existing icons (unchanged)                                              |
 | Create | `apps/web/src/components/FlightStrip/WaypointList.tsx`       | Waypoint rows with checkboxes (was TaskList)                                    |
 | Create | `apps/web/src/components/FlightStrip/FlightStripActions.tsx` | HOLD PATTERN / CLEAR TO LAND buttons (was BallCardActions)                      |
 | Create | `apps/web/src/components/FlightStrip/index.tsx`              | Horizontal strip layout with expand/collapse (was BallCard)                     |
-| Modify | `apps/web/src/index.css`                                     | Add retro CSS: scanlines, vignette, ATC color vars                              |
+| Modify | `apps/web/src/index.css`                                     | Add retro CSS: scanlines, vignette                                              |
 | Modify | `apps/web/src/App.tsx`                                       | TRACON board layout with rack sections                                          |
 | Modify | `apps/web/src/main.tsx`                                      | Swap `BallsProvider` → `FlightsProvider`                                        |
 | Delete | `apps/web/src/components/BallCard/`                          | Replaced by FlightStrip                                                         |
@@ -36,67 +32,7 @@
 
 ---
 
-## Task 1: Add Vitest
-
-**Files:**
-
-- Modify: `apps/web/package.json`
-- Modify: `apps/web/vite.config.ts`
-
-- [ ] **Install Vitest**
-
-```bash
-cd apps/web && pnpm add -D vitest
-```
-
-- [ ] **Update `apps/web/vite.config.ts`**
-
-```ts
-import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vitest/config';
-
-export default defineConfig({
-    plugins: [tailwindcss(), react()],
-    test: {
-        environment: 'node',
-    },
-});
-```
-
-- [ ] **Add test script to `apps/web/package.json`**
-
-```json
-{
-    "scripts": {
-        "dev": "vite",
-        "build": "tsc -b && vite build",
-        "preview": "vite preview",
-        "typecheck": "tsc -b",
-        "test": "vitest run",
-        "test:watch": "vitest"
-    }
-}
-```
-
-- [ ] **Verify Vitest runs**
-
-```bash
-cd apps/web && pnpm test
-```
-
-Expected: `No test files found` (exit 0 or a friendly message — not an error)
-
-- [ ] **Commit**
-
-```bash
-git add apps/web/package.json apps/web/vite.config.ts apps/web/pnpm-lock.yaml pnpm-lock.yaml
-git commit -m "Add Vitest test runner"
-```
-
----
-
-## Task 2: Update Shared Types
+## Task 1: Update Shared Types
 
 **Files:**
 
@@ -126,7 +62,7 @@ export interface AppData {
 }
 ```
 
-- [ ] **Verify types package still compiles**
+- [ ] **Verify types package compiles**
 
 ```bash
 cd packages/types && pnpm exec tsc --noEmit
@@ -143,183 +79,7 @@ git commit -m "Rename Ball to Flight in shared types, add callsign and note fiel
 
 ---
 
-## Task 3: Callsign Utility
-
-**Files:**
-
-- Create: `apps/web/src/utils/callsign.ts`
-- Create: `apps/web/src/utils/callsign.test.ts`
-
-- [ ] **Write the failing tests first — create `apps/web/src/utils/callsign.test.ts`**
-
-```ts
-import { describe, expect, it, vi } from 'vitest';
-import { generateCallsign } from './callsign';
-
-describe('generateCallsign', () => {
-    it('matches format XXX-NN', () => {
-        expect(generateCallsign('Q4 Strategy')).toMatch(/^[A-Z]{3}-\d{2}$/);
-    });
-
-    it('uses first letter of each word up to 3', () => {
-        vi.spyOn(Math, 'random').mockReturnValue(0);
-        expect(generateCallsign('Alpha Beta Gamma')).toBe('ABG-01');
-        vi.restoreAllMocks();
-    });
-
-    it('pads with X when fewer than 3 words', () => {
-        vi.spyOn(Math, 'random').mockReturnValue(0);
-        expect(generateCallsign('Hiring Loop')).toBe('HLX-01');
-        vi.restoreAllMocks();
-    });
-
-    it('pads with XX for a single word', () => {
-        vi.spyOn(Math, 'random').mockReturnValue(0);
-        expect(generateCallsign('Infra')).toBe('IXX-01');
-        vi.restoreAllMocks();
-    });
-
-    it('ignores words beyond the third', () => {
-        vi.spyOn(Math, 'random').mockReturnValue(0);
-        expect(generateCallsign('Alpha Beta Gamma Delta')).toBe('ABG-01');
-        vi.restoreAllMocks();
-    });
-
-    it('number ranges from 01 to 99', () => {
-        vi.spyOn(Math, 'random').mockReturnValue(0.98);
-        expect(generateCallsign('Test')).toMatch(/-99$/);
-        vi.restoreAllMocks();
-    });
-});
-```
-
-- [ ] **Run to confirm they fail**
-
-```bash
-cd apps/web && pnpm test
-```
-
-Expected: FAIL — `Cannot find module './callsign'`
-
-- [ ] **Implement `apps/web/src/utils/callsign.ts`**
-
-```ts
-export const generateCallsign = (name: string): string => {
-    const words = name.trim().split(/\s+/);
-    const letters = words.slice(0, 3).map((w) => w[0]?.toUpperCase() ?? 'X');
-    while (letters.length < 3) letters.push('X');
-    const code = letters.join('');
-    const num = String(Math.floor(Math.random() * 99) + 1).padStart(2, '0');
-    return `${code}-${num}`;
-};
-```
-
-- [ ] **Run tests — all should pass**
-
-```bash
-cd apps/web && pnpm test
-```
-
-Expected: 6 tests pass
-
-- [ ] **Commit**
-
-```bash
-git add apps/web/src/utils/callsign.ts apps/web/src/utils/callsign.test.ts
-git commit -m "Add generateCallsign utility with tests"
-```
-
----
-
-## Task 4: Waypoint Prune Utility
-
-**Files:**
-
-- Create: `apps/web/src/utils/prune.ts`
-- Create: `apps/web/src/utils/prune.test.ts`
-
-- [ ] **Write the failing tests — create `apps/web/src/utils/prune.test.ts`**
-
-```ts
-import type { Flight } from '@aloft/types';
-import { describe, expect, it } from 'vitest';
-import { pruneCompletedWaypoints } from './prune';
-
-const makeFlight = (tasks: { id: string; done: boolean }[]): Flight => ({
-    id: '1',
-    callsign: 'TST-01',
-    name: 'Test',
-    tasks: tasks.map((t) => ({ ...t, text: t.id })),
-    note: null,
-    dismissedOn: null,
-    snoozedUntil: null,
-});
-
-describe('pruneCompletedWaypoints', () => {
-    it('removes done tasks', () => {
-        const flight = makeFlight([
-            { id: 'a', done: true },
-            { id: 'b', done: false },
-        ]);
-        expect(pruneCompletedWaypoints(flight).tasks).toHaveLength(1);
-        expect(pruneCompletedWaypoints(flight).tasks[0].id).toBe('b');
-    });
-
-    it('keeps all tasks when none are done', () => {
-        const flight = makeFlight([{ id: 'a', done: false }]);
-        expect(pruneCompletedWaypoints(flight).tasks).toHaveLength(1);
-    });
-
-    it('returns empty tasks array when all are done', () => {
-        const flight = makeFlight([{ id: 'a', done: true }]);
-        expect(pruneCompletedWaypoints(flight).tasks).toHaveLength(0);
-    });
-
-    it('does not mutate the original flight', () => {
-        const flight = makeFlight([{ id: 'a', done: true }]);
-        pruneCompletedWaypoints(flight);
-        expect(flight.tasks).toHaveLength(1);
-    });
-});
-```
-
-- [ ] **Run to confirm they fail**
-
-```bash
-cd apps/web && pnpm test
-```
-
-Expected: FAIL — `Cannot find module './prune'`
-
-- [ ] **Implement `apps/web/src/utils/prune.ts`**
-
-```ts
-import type { Flight } from '@aloft/types';
-
-export const pruneCompletedWaypoints = (flight: Flight): Flight => ({
-    ...flight,
-    tasks: flight.tasks.filter((t) => !t.done),
-});
-```
-
-- [ ] **Run all tests — should pass**
-
-```bash
-cd apps/web && pnpm test
-```
-
-Expected: 10 tests pass (6 callsign + 4 prune)
-
-- [ ] **Commit**
-
-```bash
-git add apps/web/src/utils/prune.ts apps/web/src/utils/prune.test.ts
-git commit -m "Add pruneCompletedWaypoints utility with tests"
-```
-
----
-
-## Task 5: Update Storage
+## Task 2: Update Storage
 
 **Files:**
 
@@ -386,14 +146,6 @@ export const saveNotificationState = (state: NotificationState): void => {
 };
 ```
 
-- [ ] **Verify types compile (storage will still error until context is updated — that's fine)**
-
-```bash
-cd apps/web && pnpm exec tsc --noEmit 2>&1 | head -20
-```
-
-Expected: errors about `Ball`/`balls` references in BallsContext and App — those are fine, we haven't touched them yet.
-
 - [ ] **Commit**
 
 ```bash
@@ -403,7 +155,7 @@ git commit -m "Update storage to use flights, add backward-compat migration from
 
 ---
 
-## Task 6: FlightsContext
+## Task 3: FlightsContext
 
 **Files:**
 
@@ -411,13 +163,21 @@ git commit -m "Update storage to use flights, add backward-compat migration from
 
 - [ ] **Create `apps/web/src/context/FlightsContext.tsx`**
 
+`generateCallsign` lives here — it's only called by `addFlight`. Algorithm: first letter of each word (up to 3), uppercased, padded to 3 chars with `X`, plus a random two-digit suffix. e.g. "Q4 Strategy" → `QST-04`, "Hiring Loop" → `HLX-12`.
+
 ```tsx
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { AppData, Flight } from '@aloft/types';
-import { generateCallsign } from '../utils/callsign';
 import { restoreSnoozedNotifications, scheduleWakeNotification } from '../utils/notifications';
-import { pruneCompletedWaypoints } from '../utils/prune';
 import { loadData, loadNotificationState, saveData, saveNotificationState } from '../utils/storage';
+
+const generateCallsign = (name: string): string => {
+    const words = name.trim().split(/\s+/);
+    const letters = words.slice(0, 3).map((w) => w[0]?.toUpperCase() ?? 'X');
+    while (letters.length < 3) letters.push('X');
+    const num = String(Math.floor(Math.random() * 99) + 1).padStart(2, '0');
+    return `${letters.join('')}-${num}`;
+};
 
 export const getTodayStr = (): string => new Date().toISOString().split('T')[0];
 
@@ -478,7 +238,7 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
 
     useEffect(() => {
         restoreSnoozedNotifications(data.flights);
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
         if (notificationStatus !== 'granted') return;
@@ -549,7 +309,7 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         setData((d) => ({
             ...d,
             flights: d.flights.map((f) =>
-                f.id === id ? { ...pruneCompletedWaypoints(f), dismissedOn: getTodayStr() } : f,
+                f.id === id ? { ...f, tasks: f.tasks.filter((t) => !t.done), dismissedOn: getTodayStr() } : f,
             ),
         }));
     };
@@ -652,12 +412,6 @@ export const useFlights = (): FlightsContextValue => {
 };
 ```
 
-- [ ] **Run tests — still 10 passing, no regression**
-
-```bash
-cd apps/web && pnpm test
-```
-
 - [ ] **Commit**
 
 ```bash
@@ -667,7 +421,7 @@ git commit -m "Add FlightsContext with dismissFlight waypoint pruning and setNot
 
 ---
 
-## Task 7: useFlights Hook + types.ts
+## Task 4: useFlights Hook + types.ts
 
 **Files:**
 
@@ -695,13 +449,13 @@ git commit -m "Add useFlights hook and update types re-exports"
 
 ---
 
-## Task 8: FlightStrip Icons
+## Task 5: FlightStrip Icons
 
 **Files:**
 
 - Create: `apps/web/src/components/FlightStrip/icons.tsx`
 
-- [ ] **Create `apps/web/src/components/FlightStrip/icons.tsx`** — exact copy of the existing BallCard icons:
+- [ ] **Create `apps/web/src/components/FlightStrip/icons.tsx`**
 
 ```tsx
 export const IconCheck = () => (
@@ -783,7 +537,7 @@ git commit -m "Add FlightStrip icons"
 
 ---
 
-## Task 9: WaypointList Component
+## Task 6: WaypointList Component
 
 **Files:**
 
@@ -894,7 +648,7 @@ const WaypointList = ({ flightId }: Props) => {
     return (
         <div>
             {flight.tasks.map((task) => (
-                <div key={task.id} style={{ ...S.row, borderBottom: '1px solid #0a160a' }}>
+                <div key={task.id} style={S.row}>
                     <button style={S.checkbox(task.done)} onClick={() => toggleWaypoint(flightId, task.id)}>
                         {task.done && <IconCheck />}
                     </button>
@@ -965,7 +719,7 @@ git commit -m "Add WaypointList component"
 
 ---
 
-## Task 10: FlightStripActions Component
+## Task 7: FlightStripActions Component
 
 **Files:**
 
@@ -1118,13 +872,13 @@ git commit -m "Add FlightStripActions with HOLD PATTERN and CLEAR TO LAND"
 
 ---
 
-## Task 11: FlightStrip Component
+## Task 8: FlightStrip Component
 
 **Files:**
 
 - Create: `apps/web/src/components/FlightStrip/index.tsx`
 
-The strip layout has four columns: `[5px accent][80px callsign][flex main][90px right]`. The expanded panel uses `paddingLeft: 98px` (5 + 80 + 1 border + 12 padding) so waypoints indent flush with the main column.
+The strip layout has four columns: `[5px accent][80px callsign][flex main][90px right]`. The expanded panel uses `paddingLeft: 98px` (5 + 80 + 1px border + 12px padding) so waypoints align flush under the main column.
 
 - [ ] **Create `apps/web/src/components/FlightStrip/index.tsx`**
 
@@ -1161,7 +915,6 @@ const FlightStrip = ({ flight }: Props) => {
 
     const accentColor = snoozed ? '#7c3aed' : dismissed ? '#1d4d1d' : '#4ade80';
     const nameColor = dismissed ? '#1d4d1d' : '#6ee77c';
-    const dimColor = '#2a5c2a';
 
     const commitRename = () => {
         const v = nameVal.trim();
@@ -1171,25 +924,25 @@ const FlightStrip = ({ flight }: Props) => {
     };
 
     const commitNote = () => {
-        const v = noteVal.trim() || null;
-        setNote(flight.id, v);
+        setNote(flight.id, noteVal.trim() || null);
         setEditingNote(false);
-    };
-
-    const stripStyle: React.CSSProperties = {
-        display: 'flex',
-        alignItems: 'stretch',
-        border: '1px solid #1d4d1d',
-        background: expanded ? 'rgba(0,22,0,0.85)' : 'rgba(0,16,0,0.7)',
-        marginBottom: expanded ? 0 : '3px',
-        cursor: dismissed ? 'default' : 'pointer',
-        transition: 'background 0.1s',
-        minHeight: '52px',
     };
 
     return (
         <>
-            <div style={stripStyle} onClick={() => !dismissed && !editingName && setExpanded((e) => !e)}>
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'stretch',
+                    border: '1px solid #1d4d1d',
+                    background: expanded ? 'rgba(0,22,0,0.85)' : 'rgba(0,16,0,0.7)',
+                    marginBottom: expanded ? 0 : '3px',
+                    cursor: dismissed ? 'default' : 'pointer',
+                    transition: 'background 0.1s',
+                    minHeight: '52px',
+                }}
+                onClick={() => !dismissed && !editingName && setExpanded((e) => !e)}
+            >
                 {/* Accent bar */}
                 <div style={{ width: '5px', flexShrink: 0, background: accentColor, alignSelf: 'stretch' }} />
 
@@ -1277,7 +1030,7 @@ const FlightStrip = ({ flight }: Props) => {
                             style={{
                                 fontFamily: "'Courier New', monospace",
                                 fontSize: '11px',
-                                color: dimColor,
+                                color: '#2a5c2a',
                                 marginTop: '2px',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
@@ -1292,7 +1045,7 @@ const FlightStrip = ({ flight }: Props) => {
                             style={{
                                 fontFamily: "'Courier New', monospace",
                                 fontSize: '10px',
-                                color: dimColor,
+                                color: '#2a5c2a',
                                 marginTop: '1px',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
@@ -1331,7 +1084,7 @@ const FlightStrip = ({ flight }: Props) => {
                     }}
                 >
                     {flight.tasks.length > 0 && (
-                        <div style={{ fontFamily: "'Courier New', monospace", fontSize: '11px', color: dimColor }}>
+                        <div style={{ fontFamily: "'Courier New', monospace", fontSize: '11px', color: '#2a5c2a' }}>
                             {doneTasks.length}/{flight.tasks.length} wpts
                         </div>
                     )}
@@ -1342,7 +1095,7 @@ const FlightStrip = ({ flight }: Props) => {
                                     background: 'transparent',
                                     border: 'none',
                                     cursor: 'pointer',
-                                    color: dimColor,
+                                    color: '#2a5c2a',
                                     padding: '2px',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -1387,7 +1140,7 @@ const FlightStrip = ({ flight }: Props) => {
                         marginBottom: '3px',
                     }}
                 >
-                    <div style={{ paddingLeft: '98px', padding: '12px 14px 14px 98px' }}>
+                    <div style={{ padding: '12px 14px 14px 98px' }}>
                         <WaypointList flightId={flight.id} />
 
                         {/* Pilot note */}
@@ -1404,7 +1157,7 @@ const FlightStrip = ({ flight }: Props) => {
                                     fontFamily: "'Courier New', monospace",
                                     fontSize: '9px',
                                     letterSpacing: '2px',
-                                    color: dimColor,
+                                    color: '#2a5c2a',
                                     marginBottom: '4px',
                                 }}
                             >
@@ -1477,14 +1230,14 @@ git commit -m "Add FlightStrip component with strip rack layout, note editing, e
 
 ---
 
-## Task 12: Retro CSS + App.tsx
+## Task 9: Retro CSS + App.tsx
 
 **Files:**
 
 - Modify: `apps/web/src/index.css`
 - Modify: `apps/web/src/App.tsx`
 
-- [ ] **Update `apps/web/src/index.css`** — replace the full contents:
+- [ ] **Update `apps/web/src/index.css`**
 
 ```css
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -1538,49 +1291,33 @@ const App = () => {
         setShowAdd(false);
     };
 
-    const now = new Date();
-    const dateStr = now
+    const dateStr = new Date()
         .toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' })
         .toUpperCase()
         .replace(',', '');
 
-    const headerStyle: React.CSSProperties = {
-        fontFamily: "'Courier New', monospace",
-        background: '#060e06',
-        color: '#4ade80',
-        minHeight: '100vh',
-        position: 'relative',
-        overflow: 'hidden',
-    };
-
-    const innerStyle: React.CSSProperties = {
-        position: 'relative',
-        zIndex: 6,
-        maxWidth: '680px',
-        margin: '0 auto',
-        padding: '24px 24px 60px',
-    };
-
-    const sectionLabel: React.CSSProperties = {
-        fontFamily: "'Courier New', monospace",
-        fontSize: '9px',
-        letterSpacing: '3px',
-        color: '#2a5c2a',
-        textTransform: 'uppercase',
-        margin: '20px 0 8px',
-    };
-
-    const rack: React.CSSProperties = {
-        border: '1px solid #1a3d1a',
-        background: 'rgba(0,12,0,0.4)',
-        padding: '3px',
-    };
-
     return (
-        <div style={headerStyle}>
+        <div
+            style={{
+                fontFamily: "'Courier New', monospace",
+                background: '#060e06',
+                color: '#4ade80',
+                minHeight: '100vh',
+                position: 'relative',
+                overflow: 'hidden',
+            }}
+        >
             <div className="atc-scanlines" />
             <div className="atc-vignette" />
-            <div style={innerStyle}>
+            <div
+                style={{
+                    position: 'relative',
+                    zIndex: 6,
+                    maxWidth: '680px',
+                    margin: '0 auto',
+                    padding: '24px 24px 60px',
+                }}
+            >
                 {/* Header */}
                 <div
                     style={{
@@ -1592,25 +1329,9 @@ const App = () => {
                         marginBottom: '4px',
                     }}
                 >
-                    <div
-                        style={{
-                            fontFamily: "'Courier New', monospace",
-                            fontSize: '20px',
-                            color: '#6ee77c',
-                            letterSpacing: '5px',
-                        }}
-                    >
-                        ALOFT TRACON
-                    </div>
+                    <div style={{ fontSize: '20px', color: '#6ee77c', letterSpacing: '5px' }}>ALOFT TRACON</div>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <span
-                            style={{
-                                fontFamily: "'Courier New', monospace",
-                                fontSize: '11px',
-                                color: '#2a5c2a',
-                                letterSpacing: '1px',
-                            }}
-                        >
+                        <span style={{ fontSize: '11px', color: '#2a5c2a', letterSpacing: '1px' }}>
                             {dateStr} &nbsp;·&nbsp; <span style={{ color: '#4ade80' }}>{active.length}</span> AIRBORNE
                             &nbsp;·&nbsp; <span style={{ color: '#4ade80' }}>{done.length}</span> CLEARED
                         </span>
@@ -1628,7 +1349,6 @@ const App = () => {
                                     textTransform: 'uppercase',
                                 }}
                                 onClick={requestNotification}
-                                title="Enable notifications"
                             >
                                 {notificationStatus === 'granted' ? '🔔 ON' : 'NOTIFY'}
                             </button>
@@ -1644,7 +1364,6 @@ const App = () => {
                             background: 'rgba(0,20,0,0.5)',
                             padding: '8px 14px',
                             marginTop: '12px',
-                            fontFamily: "'Courier New', monospace",
                             fontSize: '11px',
                             color: '#2a7a2a',
                             letterSpacing: '1px',
@@ -1655,11 +1374,21 @@ const App = () => {
                     </div>
                 )}
 
-                {/* Airborne section */}
+                {/* Airborne */}
                 {active.length > 0 && (
                     <>
-                        <div style={sectionLabel}>// AIRBORNE</div>
-                        <div style={rack}>
+                        <div
+                            style={{
+                                fontSize: '9px',
+                                letterSpacing: '3px',
+                                color: '#2a5c2a',
+                                textTransform: 'uppercase',
+                                margin: '20px 0 8px',
+                            }}
+                        >
+                            // AIRBORNE
+                        </div>
+                        <div style={{ border: '1px solid #1a3d1a', background: 'rgba(0,12,0,0.4)', padding: '3px' }}>
                             {active.map((flight) => (
                                 <FlightStrip key={flight.id} flight={flight} />
                             ))}
@@ -1667,11 +1396,21 @@ const App = () => {
                     </>
                 )}
 
-                {/* Cleared section */}
+                {/* Cleared */}
                 {done.length > 0 && (
                     <>
-                        <div style={sectionLabel}>// CLEARED TODAY</div>
-                        <div style={rack}>
+                        <div
+                            style={{
+                                fontSize: '9px',
+                                letterSpacing: '3px',
+                                color: '#2a5c2a',
+                                textTransform: 'uppercase',
+                                margin: '20px 0 8px',
+                            }}
+                        >
+                            // CLEARED TODAY
+                        </div>
+                        <div style={{ border: '1px solid #1a3d1a', background: 'rgba(0,12,0,0.4)', padding: '3px' }}>
                             {done.map((flight) => (
                                 <FlightStrip key={flight.id} flight={flight} />
                             ))}
@@ -1683,7 +1422,6 @@ const App = () => {
                 {data.flights.length === 0 && (
                     <div
                         style={{
-                            fontFamily: "'Courier New', monospace",
                             fontSize: '11px',
                             color: '#1d4d1d',
                             letterSpacing: '2px',
@@ -1789,7 +1527,7 @@ git commit -m "Add retro TRACON board layout and ATC CSS effects"
 
 ---
 
-## Task 13: Wire Up Provider + Clean Up
+## Task 10: Wire Up + Clean Out
 
 **Files:**
 
@@ -1827,7 +1565,7 @@ rm apps/web/src/hooks/useBalls.ts
 rm -rf apps/web/src/components/BallCard
 ```
 
-- [ ] **Verify full typecheck passes**
+- [ ] **Verify typecheck passes**
 
 ```bash
 cd apps/web && pnpm typecheck
@@ -1835,21 +1573,13 @@ cd apps/web && pnpm typecheck
 
 Expected: no errors
 
-- [ ] **Run tests — all 10 still pass**
-
-```bash
-cd apps/web && pnpm test
-```
-
-Expected: 10 tests pass
-
-- [ ] **Verify dev build starts**
+- [ ] **Verify dev server starts and app loads**
 
 ```bash
 cd apps/web && pnpm dev
 ```
 
-Expected: Vite starts on localhost:5173, no console errors
+Expected: Vite starts, open http://localhost:5173, board renders with retro green theme
 
 - [ ] **Commit**
 
@@ -1859,26 +1589,3 @@ git rm apps/web/src/context/BallsContext.tsx apps/web/src/hooks/useBalls.ts
 git rm -r apps/web/src/components/BallCard
 git commit -m "Wire FlightsProvider, remove old Ball components and context"
 ```
-
----
-
-## Self-Review
-
-**Spec coverage check:**
-
-| Requirement                                              | Task                                    |
-| -------------------------------------------------------- | --------------------------------------- |
-| Ball → Flight rename (types, context, hooks, components) | Tasks 2, 5, 6, 7                        |
-| Auto-generated callsign on addFlight                     | Tasks 3, 5                              |
-| Sticky note per flight (setNote, click-to-edit)          | Tasks 5, 11                             |
-| Waypoints reset on dismissFlight (done tasks pruned)     | Tasks 4, 5                              |
-| Snooze does NOT prune                                    | Task 5 (snoozeFlight has no prune call) |
-| Strip rack layout                                        | Task 11                                 |
-| Retro phosphor green TRACON aesthetic                    | Tasks 12                                |
-| `// AIRBORNE` / `// CLEARED TODAY` section labels        | Task 12                                 |
-| `⏱ HOLD PATTERN` / `✈ CLEAR TO LAND` buttons             | Task 10                                 |
-| Note preview in collapsed strip                          | Task 11                                 |
-| Next waypoint hint in collapsed strip                    | Task 11                                 |
-| Cleared strips non-expandable                            | Task 11 (dismissed check in onClick)    |
-| Storage migration balls → flights                        | Task 5                                  |
-| Notification copy updated                                | Task 6                                  |
