@@ -56,7 +56,7 @@ const FlightsContext = createContext<FlightsContextValue | null>(null);
 
 export const FlightsProvider = ({ children }: { children: React.ReactNode }) => {
     const [data, setData] = useState<AppData>(loadData);
-    const [, setTick] = useState(0);
+    const [tick, setTick] = useState(0);
     const [notificationStatus, setNotificationStatus] = useState<string>(() => {
         try {
             return Notification.permission;
@@ -80,6 +80,13 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         const timer = setTimeout(() => setTick((n) => n + 1), earliest - Date.now());
         return () => clearTimeout(timer);
     }, [data.flights]);
+
+    useEffect(() => {
+        const midnight = new Date();
+        midnight.setHours(24, 0, 0, 0);
+        const timer = setTimeout(() => setTick((n) => n + 1), midnight.getTime() - Date.now());
+        return () => clearTimeout(timer);
+    }, [tick]);
 
     useEffect(() => {
         if (notificationStatus !== 'granted') return;
