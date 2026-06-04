@@ -3,8 +3,8 @@ import type { Flight } from '@aloft/types';
 import clsx from 'clsx';
 import { isDismissedToday, isSnoozed, snoozeLabel, useFlights } from '../../hooks/useFlights';
 import FlightStripActions from './FlightStripActions';
-import WaypointList from './WaypointList';
-import { IconEdit, IconTrash } from './icons';
+import WaypointList, { sortTasks } from './WaypointList';
+import { IconEdit, IconFlag, IconTrash } from './icons';
 
 interface Props {
     flight: Flight;
@@ -27,7 +27,7 @@ const FlightStrip = ({ flight }: Props) => {
     const dismissed = isDismissedToday(flight);
     const snoozed = isSnoozed(flight);
     const doneTasks = flight.tasks.filter((t) => t.done);
-    const nextWaypoint = flight.tasks.find((t) => !t.done);
+    const nextWaypoint = sortTasks(flight.tasks).find((t) => !t.done);
 
     // These are RUNTIME-DYNAMIC — keep as inline style
     const accentColor = dismissed && !snoozed ? '#1d4d1d' : '#4ade80';
@@ -100,8 +100,12 @@ const FlightStrip = ({ flight }: Props) => {
                         </div>
                     )}
                     {nextWaypoint && (
-                        <div className="font-mono text-[11px] text-[#2a5c2a] mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap">
-                            → {nextWaypoint.text}
+                        <div
+                            className="font-mono text-[11px] mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap flex items-center gap-[4px]"
+                            style={{ color: nextWaypoint.expedite ? '#4ade80' : '#2a5c2a' }}
+                        >
+                            <span className="truncate">→ {nextWaypoint.text}</span>
+                            {nextWaypoint.expedite && <IconFlag />}
                         </div>
                     )}
                     {flight.note && !dismissed && (

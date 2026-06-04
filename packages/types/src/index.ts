@@ -2,6 +2,7 @@ export interface Task {
     id: string;
     text: string;
     done: boolean;
+    expedite?: boolean;
 }
 
 export interface Flight {

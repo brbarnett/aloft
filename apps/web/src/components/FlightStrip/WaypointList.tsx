@@ -2,14 +2,23 @@ import { useState } from 'react';
 import type { Task } from '@aloft/types';
 import clsx from 'clsx';
 import { useFlights } from '../../hooks/useFlights';
-import { IconCheck, IconEdit, IconPlus, IconTrash } from './icons';
+import { IconCheck, IconEdit, IconFlag, IconPlus, IconTrash } from './icons';
+
+export const sortTasks = (tasks: Task[]): Task[] => {
+    const order = (t: Task) => {
+        if (!t.done && t.expedite) return 0;
+        if (!t.done) return 1;
+        return 2;
+    };
+    return [...tasks].sort((a, b) => order(a) - order(b));
+};
 
 interface Props {
     flightId: string;
 }
 
 const WaypointList = ({ flightId }: Props) => {
-    const { data, addWaypoint, toggleWaypoint, deleteWaypoint, editWaypoint } = useFlights();
+    const { data, addWaypoint, toggleWaypoint, deleteWaypoint, editWaypoint, toggleWaypointExpedite } = useFlights();
     const flight = data.flights.find((f) => f.id === flightId);
 
     const [input, setInput] = useState('');
@@ -39,8 +48,14 @@ const WaypointList = ({ flightId }: Props) => {
 
     return (
         <div>
-            {flight.tasks.map((task) => (
-                <div key={task.id} className="flex items-center gap-2 py-[5px] border-b border-[#0a160a]">
+            {sortTasks(flight.tasks).map((task) => (
+                <div
+                    key={task.id}
+                    className={clsx(
+                        'flex items-center gap-2 py-[5px] border-b border-[#0a160a]',
+                        task.expedite && !task.done && 'border-l-2 border-l-[#4ade80]',
+                    )}
+                >
                     <button
                         className={clsx(
                             'w-[13px] h-[13px] shrink-0 flex items-center justify-center cursor-pointer text-[8px]',
@@ -51,6 +66,14 @@ const WaypointList = ({ flightId }: Props) => {
                         onClick={() => toggleWaypoint(flightId, task.id)}
                     >
                         {task.done && <IconCheck />}
+                    </button>
+                    <button
+                        className="bg-transparent border-none cursor-pointer p-[2px] flex items-center shrink-0"
+                        style={{ color: task.expedite ? '#4ade80' : '#2a5c2a' }}
+                        onClick={() => toggleWaypointExpedite(flightId, task.id)}
+                        title="Expedite"
+                    >
+                        <IconFlag />
                     </button>
                     {editingId === task.id ? (
                         <input

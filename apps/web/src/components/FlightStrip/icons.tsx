@@ -73,3 +73,10 @@ export const IconEdit = () => (
         />
     </svg>
 );
+
+export const IconFlag = () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M3 1v12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M3 2l8 3-8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+);

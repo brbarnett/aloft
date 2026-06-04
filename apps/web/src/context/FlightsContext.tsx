@@ -50,6 +50,7 @@ export interface FlightsContextValue {
     toggleWaypoint: (flightId: string, taskId: string) => void;
     deleteWaypoint: (flightId: string, taskId: string) => void;
     editWaypoint: (flightId: string, taskId: string, text: string) => void;
+    toggleWaypointExpedite: (flightId: string, taskId: string) => void;
 }
 
 const FlightsContext = createContext<FlightsContextValue | null>(null);
@@ -231,6 +232,17 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         }));
     };
 
+    const toggleWaypointExpedite = (flightId: string, taskId: string) => {
+        setData((d) => ({
+            ...d,
+            flights: d.flights.map((f) =>
+                f.id === flightId
+                    ? { ...f, tasks: f.tasks.map((t) => (t.id === taskId ? { ...t, expedite: !t.expedite } : t)) }
+                    : f,
+            ),
+        }));
+    };
+
     const value: FlightsContextValue = {
         data,
         active: data.flights.filter((f) => !isDismissedToday(f)),
@@ -248,6 +260,7 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         toggleWaypoint,
         deleteWaypoint,
         editWaypoint,
+        toggleWaypointExpedite,
     };
 
     return <FlightsContext.Provider value={value}>{children}</FlightsContext.Provider>;
