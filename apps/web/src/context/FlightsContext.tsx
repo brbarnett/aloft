@@ -43,7 +43,7 @@ export interface FlightsContextValue {
     deleteFlight: (id: string) => void;
     dismissFlight: (id: string) => void;
     undoDismiss: (id: string) => void;
-    snoozeFlight: (id: string, ms: number | null) => void;
+    snoozeFlight: (id: string, until: number) => void;
     renameFlight: (id: string, name: string) => void;
     setNote: (id: string, note: string | null) => void;
     addWaypoint: (flightId: string, text: string) => void;
@@ -170,15 +170,7 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         }));
     };
 
-    const snoozeFlight = (id: string, ms: number | null) => {
-        const until =
-            ms === null
-                ? (() => {
-                      const d = new Date();
-                      d.setHours(24, 0, 0, 0);
-                      return d.getTime();
-                  })()
-                : Date.now() + ms;
+    const snoozeFlight = (id: string, until: number) => {
         setData((d) => ({
             ...d,
             flights: d.flights.map((f) => (f.id === id ? { ...f, snoozedUntil: until, dismissedOn: null } : f)),

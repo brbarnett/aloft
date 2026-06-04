@@ -3,12 +3,26 @@ import clsx from 'clsx';
 import { isDismissedToday, isSnoozed, snoozeLabel, useFlights } from '../../hooks/useFlights';
 import { IconHold, IconUndo } from './icons';
 
-const HOLD_OPTIONS: { label: string; ms: number | null }[] = [
-    { label: '20 MIN', ms: 20 * 60 * 1000 },
-    { label: '1 HR', ms: 60 * 60 * 1000 },
-    { label: '2 HR', ms: 2 * 60 * 60 * 1000 },
-    { label: 'TOMORROW', ms: null },
-];
+const nextMonday = (): number => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7;
+    d.setDate(d.getDate() + daysUntilMonday);
+    return d.getTime();
+};
+
+const getHoldOptions = (): { label: string; until: number }[] => {
+    const tomorrow = new Date();
+    tomorrow.setHours(24, 0, 0, 0);
+    return [
+        { label: '20 MIN', until: Date.now() + 20 * 60 * 1000 },
+        { label: '1 HR', until: Date.now() + 60 * 60 * 1000 },
+        { label: '3 HR', until: Date.now() + 3 * 60 * 60 * 1000 },
+        { label: 'TOMORROW', until: tomorrow.getTime() },
+        { label: 'NEXT WEEK', until: nextMonday() },
+    ];
+};
 
 const btnBase =
     'inline-flex items-center gap-1.5 font-mono tracking-[1px] px-3 py-[5px] cursor-pointer uppercase bg-transparent border';
@@ -40,12 +54,12 @@ const FlightStripActions = ({ flightId }: Props) => {
                         </button>
                         {showHold && (
                             <div className="absolute top-[calc(100%+4px)] left-0 bg-[#060e06] border border-[#1d4d1d] z-[100] min-w-[110px]">
-                                {HOLD_OPTIONS.map((opt) => (
+                                {getHoldOptions().map((opt) => (
                                     <button
                                         key={opt.label}
                                         className="block w-full bg-transparent border-none font-mono text-[10px] text-[#4ade80] px-3 py-[6px] text-left cursor-pointer tracking-[1px]"
                                         onClick={() => {
-                                            snoozeFlight(flightId, opt.ms);
+                                            snoozeFlight(flightId, opt.until);
                                             setShowHold(false);
                                         }}
                                     >
