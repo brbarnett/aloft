@@ -14,7 +14,7 @@ const LoginPage = () => {
                 </div>
 
                 {hasError && (
-                    <div className="text-[10px] text-[#2a5c2a] tracking-[2px] uppercase">
+                    <div className="text-[10px] text-[#4ade80] tracking-[2px] uppercase">
                         AUTHENTICATION FAILED — TRY AGAIN
                     </div>
                 )}
