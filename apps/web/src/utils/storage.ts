@@ -1,4 +1,4 @@
-import type { AppData } from '@aloft/types';
+import type { UserData, UserProfile } from '@aloft/types';
 
 const NOTIFICATION_KEY = 'aloft_notification_fired';
 
@@ -8,23 +8,35 @@ export interface NotificationState {
     afternoon: boolean;
 }
 
-export const loadData = async (): Promise<AppData> => {
+export const getUser = async (): Promise<UserProfile | null> => {
+    try {
+        const res = await fetch('/api/me');
+        if (!res.ok) return null;
+        return res.json() as Promise<UserProfile>;
+    } catch {
+        return null;
+    }
+};
+
+export const loadData = async (): Promise<UserData> => {
     try {
         const res = await fetch('/api/data');
+        if (res.status === 401) { window.location.href = '/login'; return { flights: [] }; }
         if (!res.ok) return { flights: [] };
-        return res.json() as Promise<AppData>;
+        return res.json() as Promise<UserData>;
     } catch {
         return { flights: [] };
     }
 };
 
-export const saveData = async (data: AppData): Promise<void> => {
+export const saveData = async (data: UserData): Promise<void> => {
     try {
-        await fetch('/api/data', {
+        const res = await fetch('/api/data', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         });
+        if (res.status === 401) { window.location.href = '/login'; }
     } catch {
         console.error('Failed to save data to backend');
     }

@@ -7,7 +7,7 @@ import { useFlights } from './hooks/useFlights';
 const App = () => {
     const [newName, setNewName] = useState('');
     const [showAdd, setShowAdd] = useState(false);
-    const { data, loading, active, done, notificationStatus, requestNotification, addFlight } = useFlights();
+    const { data, loading, user, active, done, notificationStatus, requestNotification, addFlight } = useFlights();
 
     if (loading) return null;
 
@@ -53,6 +53,17 @@ const App = () => {
                                 ) : (
                                     'NOTIFY'
                                 )}
+                            </button>
+                        )}
+                        {user && (
+                            <button
+                                className="bg-transparent border border-[#1d4d1d] font-mono text-[9px] tracking-[1px] px-2 py-[3px] cursor-pointer uppercase text-[#2a5c2a]"
+                                onClick={async () => {
+                                    await fetch('/api/auth/logout', { method: 'POST', redirect: 'manual' });
+                                    window.location.href = '/login';
+                                }}
+                            >
+                                SIGN OUT
                             </button>
                         )}
                     </div>

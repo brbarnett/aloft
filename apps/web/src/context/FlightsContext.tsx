@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import type { AppData, Flight } from '@aloft/types';
+import type { Flight, UserData, UserProfile } from '@aloft/types';
 import { restoreSnoozedNotifications, scheduleWakeNotification } from '../utils/notifications';
-import { loadData, loadNotificationState, saveData, saveNotificationState } from '../utils/storage';
+import { getUser, loadData, loadNotificationState, saveData, saveNotificationState } from '../utils/storage';
 
 const generateCallsign = (name: string): string => {
     const words = name.trim().split(/\s+/);
@@ -34,8 +34,9 @@ let idCounter = Date.now();
 export const newId = (): string => String(++idCounter);
 
 export interface FlightsContextValue {
-    data: AppData;
+    data: UserData;
     loading: boolean;
+    user: UserProfile | null;
     active: Flight[];
     done: Flight[];
     notificationStatus: string;
@@ -57,7 +58,8 @@ export interface FlightsContextValue {
 const FlightsContext = createContext<FlightsContextValue | null>(null);
 
 export const FlightsProvider = ({ children }: { children: React.ReactNode }) => {
-    const [data, setData] = useState<AppData>({ flights: [] });
+    const [user, setUser] = useState<UserProfile | null>(null);
+    const [data, setData] = useState<UserData>({ flights: [] });
     const [loading, setLoading] = useState(true);
     const [tick, setTick] = useState(0);
     const [notificationStatus, setNotificationStatus] = useState<string>(() => {
@@ -69,10 +71,14 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
     });
 
     useEffect(() => {
-        loadData().then((d) => {
-            setData(d);
-            setLoading(false);
-            restoreSnoozedNotifications(d.flights);
+        getUser().then((u) => {
+            if (!u) { window.location.href = '/login'; return; }
+            setUser(u);
+            loadData().then((d) => {
+                setData(d);
+                setLoading(false);
+                restoreSnoozedNotifications(d.flights);
+            });
         });
     }, []);
 
@@ -290,6 +296,7 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
     const value: FlightsContextValue = {
         data,
         loading,
+        user,
         active: data.flights.filter((f) => !isDismissedToday(f)),
         done: data.flights.filter((f) => isDismissedToday(f)),
         notificationStatus,

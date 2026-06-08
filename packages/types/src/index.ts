@@ -27,6 +27,10 @@ export interface UserRecord {
     flights: Flight[];
 }
 
+export interface UserData {
+    flights: Flight[];
+}
+
 export interface AppData {
     users: Record<string, UserRecord>;
 }
