@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest 
 import FastifyCookie from '@fastify/cookie';
 import FastifyJwt from '@fastify/jwt';
 import FastifyOAuth2 from '@fastify/oauth2';
+import type { UserProfile } from '@aloft/types';
 import { readAppData, writeAppData } from './data.js';
 
 declare module 'fastify' {
@@ -25,6 +26,11 @@ interface GoogleUserInfo {
 }
 
 export const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+    // Validate required env vars before registering any sub-plugins
+    for (const key of ['JWT_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI']) {
+        if (!process.env[key]) throw new Error(`Missing required env var: ${key}`);
+    }
+
     await fastify.register(FastifyCookie);
 
     await fastify.register(FastifyJwt, {
@@ -43,6 +49,8 @@ export const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) =
                 id: process.env.GOOGLE_CLIENT_ID!,
                 secret: process.env.GOOGLE_CLIENT_SECRET!,
             },
+            // Workaround: @fastify/oauth2 exports GOOGLE_CONFIGURATION on the default export
+            // but the TypeScript types don't reflect it, so we cast to access it.
             auth: (FastifyOAuth2 as unknown as { GOOGLE_CONFIGURATION: import('@fastify/oauth2').ProviderConfiguration }).GOOGLE_CONFIGURATION,
         },
         startRedirectPath: '/api/auth/google',
@@ -53,61 +61,61 @@ export const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) =
         try {
             await request.jwtVerify({ onlyCookie: true });
         } catch {
-            await reply.status(401).send({ error: 'Unauthorized' });
+            return reply.status(401).send({ error: 'Unauthorized' });
         }
     });
 
     fastify.get('/api/auth/google/callback', async (request, reply) => {
-        const oauthToken = await (fastify as FastifyInstance & { googleOAuth2: import('@fastify/oauth2').OAuth2Namespace }).googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request, reply);
+        try {
+            const oauthToken = await (fastify as FastifyInstance & { googleOAuth2: import('@fastify/oauth2').OAuth2Namespace }).googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request, reply);
 
-        const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-            headers: {
-                Authorization: `Bearer ${oauthToken.token.access_token}`,
-            },
-        });
-        const googleUser = await response.json() as GoogleUserInfo;
+            const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                headers: {
+                    Authorization: `Bearer ${oauthToken.token.access_token}`,
+                },
+            });
 
-        const appData = await readAppData();
+            if (!response.ok) throw new Error('Failed to fetch Google user info');
 
-        const existing = appData.users[googleUser.id];
-        if (existing) {
-            existing.profile = {
+            const googleUser = await response.json() as GoogleUserInfo;
+
+            const appData = await readAppData();
+
+            const profile: UserProfile = {
                 id: googleUser.id,
                 email: googleUser.email,
                 name: googleUser.name,
                 picture: googleUser.picture ?? null,
             };
-        } else {
-            appData.users[googleUser.id] = {
-                profile: {
-                    id: googleUser.id,
-                    email: googleUser.email,
-                    name: googleUser.name,
-                    picture: googleUser.picture ?? null,
-                },
-                flights: [],
+            if (appData.users[profile.id]) {
+                appData.users[profile.id].profile = profile;
+            } else {
+                appData.users[profile.id] = { profile, flights: [] };
+            }
+
+            await writeAppData(appData);
+
+            const jwtPayload = {
+                id: googleUser.id,
+                email: googleUser.email,
+                name: googleUser.name,
+                picture: googleUser.picture ?? null,
             };
+
+            const token = fastify.jwt.sign(jwtPayload, { expiresIn: '7d' });
+
+            reply.setCookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                path: '/',
+                sameSite: 'lax',
+                maxAge: 60 * 60 * 24 * 7,
+            });
+
+            return reply.redirect('/');
+        } catch {
+            return reply.redirect('/login?error=auth_failed');
         }
-
-        await writeAppData(appData);
-
-        const jwtPayload = {
-            id: googleUser.id,
-            email: googleUser.email,
-            name: googleUser.name,
-            picture: googleUser.picture ?? null,
-        };
-
-        const token = fastify.jwt.sign(jwtPayload, { expiresIn: '7d' });
-
-        reply.setCookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            path: '/',
-            maxAge: 60 * 60 * 24 * 7,
-        });
-
-        return reply.redirect('/');
     });
 
     fastify.post('/api/auth/logout', async (_request, reply) => {
