@@ -4,7 +4,7 @@ install:
 	pnpm install
 
 dev:
-	pnpm --filter @aloft/web dev
+	pnpm -r --parallel --if-present run dev
 
 build:
 	pnpm -r build
