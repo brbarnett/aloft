@@ -7,7 +7,9 @@ import { useFlights } from './hooks/useFlights';
 const App = () => {
     const [newName, setNewName] = useState('');
     const [showAdd, setShowAdd] = useState(false);
-    const { data, active, done, notificationStatus, requestNotification, addFlight } = useFlights();
+    const { data, loading, active, done, notificationStatus, requestNotification, addFlight } = useFlights();
+
+    if (loading) return null;
 
     const handleAdd = (e: React.SyntheticEvent) => {
         e.preventDefault();

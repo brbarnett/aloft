@@ -1,6 +1,5 @@
 import type { AppData } from '@aloft/types';
 
-const STORAGE_KEY = 'aloft_v1';
 const NOTIFICATION_KEY = 'aloft_notification_fired';
 
 export interface NotificationState {
@@ -9,26 +8,26 @@ export interface NotificationState {
     afternoon: boolean;
 }
 
-export const loadData = (): AppData => {
+export const loadData = async (): Promise<AppData> => {
     try {
-        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') || {};
-
-        return {
-            flights: (raw.flights ?? []).map((f: Record<string, unknown>) => ({
-                ...f,
-                callsign: (f.callsign as string | undefined) ?? 'XXX-00',
-                note: (f.note as string | null | undefined) ?? null,
-                snoozedUntil: (f.snoozedUntil as number | null | undefined) ?? null,
-                dismissedOn: (f.dismissedOn as string | null | undefined) ?? null,
-            })),
-        };
+        const res = await fetch('/api/data');
+        if (!res.ok) return { flights: [] };
+        return res.json() as Promise<AppData>;
     } catch {
         return { flights: [] };
     }
 };
 
-export const saveData = (data: AppData): void => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+export const saveData = async (data: AppData): Promise<void> => {
+    try {
+        await fetch('/api/data', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+    } catch {
+        console.error('Failed to save data to backend');
+    }
 };
 
 export const loadNotificationState = (): NotificationState => {
