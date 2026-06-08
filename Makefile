@@ -1,10 +1,16 @@
-.PHONY: install dev build typecheck lint fix clean preview
+.PHONY: install dev frontend backend build typecheck lint fix clean preview
 
 install:
 	pnpm install
 
 dev:
 	pnpm -r --parallel --if-present run dev
+
+frontend:
+	pnpm --filter @aloft/web dev
+
+backend:
+	pnpm --filter @aloft/api dev
 
 build:
 	pnpm -r build
