@@ -27,8 +27,9 @@ export const readUserFlights = async (userId: string): Promise<Flight[]> => {
 
 export const writeUserFlights = async (userId: string, flights: Flight[]): Promise<void> => {
     const data = await readAppData();
-    if (data.users[userId]) {
-        data.users[userId].flights = flights;
-        await writeAppData(data);
+    if (!data.users[userId]) {
+        throw Object.assign(new Error('User not found'), { statusCode: 404 });
     }
+    data.users[userId].flights = flights;
+    await writeAppData(data);
 };

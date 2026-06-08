@@ -12,7 +12,8 @@ const server = Fastify({ logger: true });
 await server.register(authPlugin);
 
 server.get('/api/data', { preHandler: server.authenticate }, async (request) => {
-    return readUserFlights(request.user.id);
+    const flights = await readUserFlights(request.user.id);
+    return { flights };
 });
 
 const bodySchema = {
