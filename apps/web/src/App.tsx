@@ -31,12 +31,11 @@ const App = () => {
 
             <div className="relative z-[6] max-w-[680px] mx-auto px-6 pt-6 pb-[60px]">
                 {/* Header */}
-                <div className="flex justify-between items-baseline border-b border-[#1a3d1a] pb-[14px] mb-1">
-                    <span className="text-[20px] text-[#6ee77c] tracking-[5px]">ALOFT TRACON</span>
+                <div className="flex justify-between items-center border-b border-[#1a3d1a] pb-[14px] mb-1">
+                    <span className="text-[20px] text-[#6ee77c] tracking-[5px] leading-tight">ALOFT<br />TRACON</span>
                     <div className="flex gap-3 items-center">
-                        <span className="text-[11px] text-[#2a5c2a] tracking-[1px]">
-                            {dateStr} &nbsp;·&nbsp; <span className="text-[#4ade80]">{active.length}</span> AIRBORNE
-                            &nbsp;·&nbsp; <span className="text-[#4ade80]">{done.length}</span> CLEARED
+                        <span className="text-[11px] text-[#2a5c2a] tracking-[1px] whitespace-nowrap">
+                            {dateStr} &nbsp;·&nbsp; <span className="text-[#4ade80]">{active.length}</span> AIRBORNE &nbsp;·&nbsp; <span className="text-[#4ade80]">{done.length}</span> CLEARED
                         </span>
                         {notificationStatus !== 'unsupported' && (
                             <button
