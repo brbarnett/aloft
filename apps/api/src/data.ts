@@ -1,4 +1,4 @@
-import type { AppData } from '@aloft/types';
+import type { AppData, Flight } from '@aloft/types';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,4 +18,17 @@ export const readAppData = async (): Promise<AppData> => {
 export const writeAppData = async (data: AppData): Promise<void> => {
     await mkdir(dir, { recursive: true });
     await writeFile(file, JSON.stringify(data, null, 2), 'utf-8');
+};
+
+export const readUserFlights = async (userId: string): Promise<Flight[]> => {
+    const data = await readAppData();
+    return data.users[userId]?.flights ?? [];
+};
+
+export const writeUserFlights = async (userId: string, flights: Flight[]): Promise<void> => {
+    const data = await readAppData();
+    if (data.users[userId]) {
+        data.users[userId].flights = flights;
+    }
+    await writeAppData(data);
 };

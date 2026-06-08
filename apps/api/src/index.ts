@@ -1,14 +1,18 @@
-import type { AppData } from '@aloft/types';
+import type { Flight } from '@aloft/types';
 import Fastify from 'fastify';
 import { authPlugin } from './auth.js';
-import { readAppData, writeAppData } from './data.js';
+import { readUserFlights, writeUserFlights } from './data.js';
+
+interface FlightsBody {
+    flights: Flight[];
+}
 
 const server = Fastify({ logger: true });
 
 await server.register(authPlugin);
 
-server.get('/api/data', async () => {
-    return readAppData();
+server.get('/api/data', { preHandler: server.authenticate }, async (request) => {
+    return readUserFlights(request.user.id);
 });
 
 const bodySchema = {
@@ -21,8 +25,8 @@ const bodySchema = {
     },
 };
 
-server.put<{ Body: AppData }>('/api/data', { schema: bodySchema }, async (request) => {
-    await writeAppData(request.body);
+server.put<{ Body: FlightsBody }>('/api/data', { schema: bodySchema, preHandler: server.authenticate }, async (request) => {
+    await writeUserFlights(request.user.id, request.body.flights);
     return request.body;
 });
 
