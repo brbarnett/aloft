@@ -1,8 +1,8 @@
-import type { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import type { UserProfile } from '@aloft/types';
 import FastifyCookie from '@fastify/cookie';
 import FastifyJwt from '@fastify/jwt';
 import FastifyOAuth2 from '@fastify/oauth2';
-import type { UserProfile } from '@aloft/types';
+import type { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 import { readAppData, writeAppData } from './data.js';
 
 declare module 'fastify' {
@@ -51,7 +51,9 @@ export const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) =
             },
             // Workaround: @fastify/oauth2 exports GOOGLE_CONFIGURATION on the default export
             // but the TypeScript types don't reflect it, so we cast to access it.
-            auth: (FastifyOAuth2 as unknown as { GOOGLE_CONFIGURATION: import('@fastify/oauth2').ProviderConfiguration }).GOOGLE_CONFIGURATION,
+            auth: (
+                FastifyOAuth2 as unknown as { GOOGLE_CONFIGURATION: import('@fastify/oauth2').ProviderConfiguration }
+            ).GOOGLE_CONFIGURATION,
         },
         startRedirectPath: '/api/auth/google',
         callbackUri: process.env.GOOGLE_REDIRECT_URI!,
@@ -67,7 +69,9 @@ export const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) =
 
     fastify.get('/api/auth/google/callback', async (request, reply) => {
         try {
-            const oauthToken = await (fastify as FastifyInstance & { googleOAuth2: import('@fastify/oauth2').OAuth2Namespace }).googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request, reply);
+            const oauthToken = await (
+                fastify as FastifyInstance & { googleOAuth2: import('@fastify/oauth2').OAuth2Namespace }
+            ).googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request, reply);
 
             const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
                 headers: {
@@ -77,7 +81,7 @@ export const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) =
 
             if (!response.ok) throw new Error('Failed to fetch Google user info');
 
-            const googleUser = await response.json() as GoogleUserInfo;
+            const googleUser = (await response.json()) as GoogleUserInfo;
 
             const appData = await readAppData();
 

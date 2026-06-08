@@ -26,10 +26,14 @@ const bodySchema = {
     },
 };
 
-server.put<{ Body: FlightsBody }>('/api/data', { schema: bodySchema, preHandler: server.authenticate }, async (request) => {
-    await writeUserFlights(request.user.id, request.body.flights);
-    return request.body;
-});
+server.put<{ Body: FlightsBody }>(
+    '/api/data',
+    { schema: bodySchema, preHandler: server.authenticate },
+    async (request) => {
+        await writeUserFlights(request.user.id, request.body.flights);
+        return request.body;
+    },
+);
 
 const start = async () => {
     try {

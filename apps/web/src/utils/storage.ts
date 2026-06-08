@@ -21,7 +21,10 @@ export const getUser = async (): Promise<UserProfile | null> => {
 export const loadData = async (): Promise<UserData> => {
     try {
         const res = await fetch('/api/data');
-        if (res.status === 401) { window.location.href = '/login'; return { flights: [] }; }
+        if (res.status === 401) {
+            window.location.href = '/login';
+            return { flights: [] };
+        }
         if (!res.ok) return { flights: [] };
         return res.json() as Promise<UserData>;
     } catch {
@@ -36,7 +39,9 @@ export const saveData = async (data: UserData): Promise<void> => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         });
-        if (res.status === 401) { window.location.href = '/login'; }
+        if (res.status === 401) {
+            window.location.href = '/login';
+        }
     } catch {
         console.error('Failed to save data to backend');
     }

@@ -72,7 +72,10 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
 
     useEffect(() => {
         getUser().then((u) => {
-            if (!u) { window.location.href = '/login'; return; }
+            if (!u) {
+                window.location.href = '/login';
+                return;
+            }
             setUser(u);
             loadData().then((d) => {
                 setData(d);
@@ -268,9 +271,7 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
             const next = {
                 ...d,
                 flights: d.flights.map((f) =>
-                    f.id === flightId
-                        ? { ...f, tasks: f.tasks.map((t) => (t.id === taskId ? { ...t, text } : t)) }
-                        : f,
+                    f.id === flightId ? { ...f, tasks: f.tasks.map((t) => (t.id === taskId ? { ...t, text } : t)) } : f,
                 ),
             };
             saveData(next);
