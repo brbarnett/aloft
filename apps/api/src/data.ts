@@ -29,6 +29,6 @@ export const writeUserFlights = async (userId: string, flights: Flight[]): Promi
     const data = await readAppData();
     if (data.users[userId]) {
         data.users[userId].flights = flights;
+        await writeAppData(data);
     }
-    await writeAppData(data);
 };
