@@ -15,6 +15,18 @@ export interface Flight {
     snoozedUntil: number | null;
 }
 
-export interface AppData {
+export interface UserProfile {
+    id: string;
+    email: string;
+    name: string;
+    picture: string;
+}
+
+export interface UserRecord {
+    profile: UserProfile;
     flights: Flight[];
+}
+
+export interface AppData {
+    users: Record<string, UserRecord>;
 }
