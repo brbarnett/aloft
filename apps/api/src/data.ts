@@ -11,7 +11,7 @@ export const readAppData = async (): Promise<AppData> => {
         const raw = await readFile(file, 'utf-8');
         return JSON.parse(raw) as AppData;
     } catch {
-        return { flights: [] };
+        return { users: {} };
     }
 };
 
