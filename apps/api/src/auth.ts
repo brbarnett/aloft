@@ -3,6 +3,7 @@ import FastifyCookie from '@fastify/cookie';
 import FastifyJwt from '@fastify/jwt';
 import FastifyOAuth2 from '@fastify/oauth2';
 import type { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import fp from 'fastify-plugin';
 import { readAppData, writeAppData } from './data.js';
 
 declare module 'fastify' {
@@ -25,7 +26,7 @@ interface GoogleUserInfo {
     picture: string | null;
 }
 
-export const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+const _authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // Validate required env vars before registering any sub-plugins
     for (const key of ['JWT_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI']) {
         if (!process.env[key]) throw new Error(`Missing required env var: ${key}`);
@@ -131,3 +132,5 @@ export const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) =
         return request.user;
     });
 };
+
+export const authPlugin = fp(_authPlugin);
