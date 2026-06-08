@@ -29,42 +29,49 @@ const App = () => {
             <div className="atc-scanlines" />
             <div className="atc-vignette" />
 
-            <div className="relative z-[6] max-w-[680px] mx-auto px-6 pt-6 pb-[60px]">
+            <div className="relative z-[6] max-w-[680px] mx-auto px-4 sm:px-6 pt-6 pb-[60px]">
                 {/* Header */}
-                <div className="flex justify-between items-center border-b border-[#1a3d1a] pb-[14px] mb-1">
-                    <span className="text-[20px] text-[#6ee77c] tracking-[5px] leading-tight">ALOFT<br />TRACON</span>
-                    <div className="flex gap-3 items-center">
-                        <span className="text-[11px] text-[#2a5c2a] tracking-[1px] whitespace-nowrap">
-                            {dateStr} &nbsp;·&nbsp; <span className="text-[#4ade80]">{active.length}</span> AIRBORNE &nbsp;·&nbsp; <span className="text-[#4ade80]">{done.length}</span> CLEARED
+                <div className="border-b border-[#1a3d1a] pb-[14px] mb-1">
+                    <div className="flex justify-between items-center">
+                        <span className="text-[20px] text-[#6ee77c] tracking-[5px] leading-tight">
+                            ALOFT
+                            <br />
+                            TRACON
                         </span>
-                        {notificationStatus !== 'unsupported' && (
-                            <button
-                                className={clsx(
-                                    'inline-flex items-center gap-1 bg-transparent border border-[#1d4d1d] font-mono text-[9px] tracking-[1px] px-2 py-[3px] cursor-pointer uppercase',
-                                    notificationStatus === 'granted' ? 'text-[#4ade80]' : 'text-[#2a5c2a]',
-                                )}
-                                onClick={requestNotification}
-                            >
-                                {notificationStatus === 'granted' ? (
-                                    <>
-                                        <IconBell /> ON
-                                    </>
-                                ) : (
-                                    'NOTIFY'
-                                )}
-                            </button>
-                        )}
-                        {user && (
-                            <button
-                                className="bg-transparent border border-[#1d4d1d] font-mono text-[9px] tracking-[1px] px-2 py-[3px] cursor-pointer uppercase text-[#2a5c2a]"
-                                onClick={async () => {
-                                    await fetch('/api/auth/logout', { method: 'POST', redirect: 'manual' });
-                                    window.location.href = '/login';
-                                }}
-                            >
-                                SIGN OUT
-                            </button>
-                        )}
+                        <div className="flex gap-3 items-center">
+                            {notificationStatus !== 'unsupported' && (
+                                <button
+                                    className={clsx(
+                                        'inline-flex items-center gap-1 bg-transparent border border-[#1d4d1d] font-mono text-[9px] tracking-[1px] px-2 py-[3px] cursor-pointer uppercase',
+                                        notificationStatus === 'granted' ? 'text-[#4ade80]' : 'text-[#2a5c2a]',
+                                    )}
+                                    onClick={requestNotification}
+                                >
+                                    {notificationStatus === 'granted' ? (
+                                        <>
+                                            <IconBell /> ON
+                                        </>
+                                    ) : (
+                                        'NOTIFY'
+                                    )}
+                                </button>
+                            )}
+                            {user && (
+                                <button
+                                    className="bg-transparent border border-[#1d4d1d] font-mono text-[9px] tracking-[1px] px-2 py-[3px] cursor-pointer uppercase text-[#2a5c2a]"
+                                    onClick={async () => {
+                                        await fetch('/api/auth/logout', { method: 'POST', redirect: 'manual' });
+                                        window.location.href = '/login';
+                                    }}
+                                >
+                                    SIGN OUT
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    <div className="mt-[6px] text-[11px] text-[#2a5c2a] tracking-[1px] whitespace-nowrap">
+                        {dateStr} &nbsp;·&nbsp; <span className="text-[#4ade80]">{active.length}</span> AIRBORNE
+                        &nbsp;·&nbsp; <span className="text-[#4ade80]">{done.length}</span> CLEARED
                     </div>
                 </div>
 

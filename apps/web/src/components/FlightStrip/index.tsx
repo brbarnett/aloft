@@ -114,12 +114,14 @@ const FlightStrip = ({ flight }: Props) => {
                         </div>
                     )}
                     {dismissed && (
-                        <div className="font-mono text-[10px] text-[#1d4d1d] mt-[2px]">landed · returns tomorrow</div>
+                        <div className="font-mono text-[10px] text-[#1d4d1d] mt-[2px] whitespace-nowrap overflow-hidden text-ellipsis">
+                            landed · returns tomorrow
+                        </div>
                     )}
                 </div>
 
                 {/* Right column */}
-                <div className="w-[90px] shrink-0 flex flex-col items-end justify-center p-2 pr-[10px] gap-1">
+                <div className="w-[80px] sm:w-[90px] shrink-0 flex flex-col items-end justify-center p-2 pr-[10px] gap-1">
                     <div className="font-mono text-[11px] text-[#2a5c2a]">
                         {doneTasks.length}/{flight.tasks.length} wpts
                     </div>
