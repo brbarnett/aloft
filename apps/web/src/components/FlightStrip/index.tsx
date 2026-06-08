@@ -162,7 +162,7 @@ const FlightStrip = ({ flight }: Props) => {
                                     onChange={(e) => setNoteVal(e.target.value)}
                                     onBlur={commitNote}
                                     onKeyDown={(e) => {
-                                        if (e.key === 'Escape') commitNote();
+                                        if (e.key === 'Escape') e.currentTarget.blur();
                                     }}
                                 />
                             ) : (

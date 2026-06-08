@@ -144,154 +144,130 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
     };
 
     const addFlight = (name: string) => {
-        setData((d) => {
-            const next = {
-                ...d,
-                flights: [
-                    ...d.flights,
-                    {
-                        id: newId(),
-                        callsign: generateCallsign(name),
-                        name,
-                        tasks: [],
-                        note: null,
-                        dismissedOn: null,
-                        snoozedUntil: null,
-                    },
-                ],
-            };
-            saveData(next);
-            return next;
-        });
+        const next = {
+            ...data,
+            flights: [
+                ...data.flights,
+                {
+                    id: newId(),
+                    callsign: generateCallsign(name),
+                    name,
+                    tasks: [],
+                    note: null,
+                    dismissedOn: null,
+                    snoozedUntil: null,
+                },
+            ],
+        };
+        setData(next);
+        saveData(next);
     };
 
     const deleteFlight = (id: string) => {
-        setData((d) => {
-            const next = { ...d, flights: d.flights.filter((f) => f.id !== id) };
-            saveData(next);
-            return next;
-        });
+        const next = { ...data, flights: data.flights.filter((f) => f.id !== id) };
+        setData(next);
+        saveData(next);
     };
 
     const dismissFlight = (id: string) => {
-        setData((d) => {
-            const next = {
-                ...d,
-                flights: d.flights.map((f) =>
-                    f.id === id ? { ...f, tasks: f.tasks.filter((t) => !t.done), dismissedOn: getTodayStr() } : f,
-                ),
-            };
-            saveData(next);
-            return next;
-        });
+        const next = {
+            ...data,
+            flights: data.flights.map((f) =>
+                f.id === id ? { ...f, tasks: f.tasks.filter((t) => !t.done), dismissedOn: getTodayStr() } : f,
+            ),
+        };
+        setData(next);
+        saveData(next);
     };
 
     const undoDismiss = (id: string) => {
-        setData((d) => {
-            const next = {
-                ...d,
-                flights: d.flights.map((f) => (f.id === id ? { ...f, dismissedOn: null, snoozedUntil: null } : f)),
-            };
-            saveData(next);
-            return next;
-        });
+        const next = {
+            ...data,
+            flights: data.flights.map((f) => (f.id === id ? { ...f, dismissedOn: null, snoozedUntil: null } : f)),
+        };
+        setData(next);
+        saveData(next);
     };
 
     const snoozeFlight = (id: string, until: number) => {
-        setData((d) => {
-            const next = {
-                ...d,
-                flights: d.flights.map((f) => (f.id === id ? { ...f, snoozedUntil: until, dismissedOn: null } : f)),
-            };
-            saveData(next);
-            return next;
-        });
+        const next = {
+            ...data,
+            flights: data.flights.map((f) => (f.id === id ? { ...f, snoozedUntil: until, dismissedOn: null } : f)),
+        };
+        setData(next);
+        saveData(next);
         scheduleWakeNotification({ snoozedUntil: until } as Flight);
     };
 
     const renameFlight = (id: string, name: string) => {
-        setData((d) => {
-            const next = { ...d, flights: d.flights.map((f) => (f.id === id ? { ...f, name } : f)) };
-            saveData(next);
-            return next;
-        });
+        const next = { ...data, flights: data.flights.map((f) => (f.id === id ? { ...f, name } : f)) };
+        setData(next);
+        saveData(next);
     };
 
     const setNote = (id: string, note: string | null) => {
-        setData((d) => {
-            const next = { ...d, flights: d.flights.map((f) => (f.id === id ? { ...f, note } : f)) };
-            saveData(next);
-            return next;
-        });
+        const next = { ...data, flights: data.flights.map((f) => (f.id === id ? { ...f, note } : f)) };
+        setData(next);
+        saveData(next);
     };
 
     const addWaypoint = (flightId: string, text: string) => {
-        setData((d) => {
-            const next = {
-                ...d,
-                flights: d.flights.map((f) =>
-                    f.id === flightId ? { ...f, tasks: [...f.tasks, { id: newId(), text, done: false }] } : f,
-                ),
-            };
-            saveData(next);
-            return next;
-        });
+        const next = {
+            ...data,
+            flights: data.flights.map((f) =>
+                f.id === flightId ? { ...f, tasks: [...f.tasks, { id: newId(), text, done: false }] } : f,
+            ),
+        };
+        setData(next);
+        saveData(next);
     };
 
     const toggleWaypoint = (flightId: string, taskId: string) => {
-        setData((d) => {
-            const next = {
-                ...d,
-                flights: d.flights.map((f) =>
-                    f.id === flightId
-                        ? { ...f, tasks: f.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) }
-                        : f,
-                ),
-            };
-            saveData(next);
-            return next;
-        });
+        const next = {
+            ...data,
+            flights: data.flights.map((f) =>
+                f.id === flightId
+                    ? { ...f, tasks: f.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) }
+                    : f,
+            ),
+        };
+        setData(next);
+        saveData(next);
     };
 
     const deleteWaypoint = (flightId: string, taskId: string) => {
-        setData((d) => {
-            const next = {
-                ...d,
-                flights: d.flights.map((f) =>
-                    f.id === flightId ? { ...f, tasks: f.tasks.filter((t) => t.id !== taskId) } : f,
-                ),
-            };
-            saveData(next);
-            return next;
-        });
+        const next = {
+            ...data,
+            flights: data.flights.map((f) =>
+                f.id === flightId ? { ...f, tasks: f.tasks.filter((t) => t.id !== taskId) } : f,
+            ),
+        };
+        setData(next);
+        saveData(next);
     };
 
     const editWaypoint = (flightId: string, taskId: string, text: string) => {
-        setData((d) => {
-            const next = {
-                ...d,
-                flights: d.flights.map((f) =>
-                    f.id === flightId ? { ...f, tasks: f.tasks.map((t) => (t.id === taskId ? { ...t, text } : t)) } : f,
-                ),
-            };
-            saveData(next);
-            return next;
-        });
+        const next = {
+            ...data,
+            flights: data.flights.map((f) =>
+                f.id === flightId ? { ...f, tasks: f.tasks.map((t) => (t.id === taskId ? { ...t, text } : t)) } : f,
+            ),
+        };
+        setData(next);
+        saveData(next);
     };
 
     const toggleWaypointExpedite = (flightId: string, taskId: string) => {
-        setData((d) => {
-            const next = {
-                ...d,
-                flights: d.flights.map((f) =>
-                    f.id === flightId
-                        ? { ...f, tasks: f.tasks.map((t) => (t.id === taskId ? { ...t, expedite: !t.expedite } : t)) }
-                        : f,
-                ),
-            };
-            saveData(next);
-            return next;
-        });
+        const next = {
+            ...data,
+            flights: data.flights.map((f) =>
+                f.id === flightId
+                    ? { ...f, tasks: f.tasks.map((t) => (t.id === taskId ? { ...t, expedite: !t.expedite } : t)) }
+                    : f,
+            ),
+        };
+        setData(next);
+        saveData(next);
     };
 
     const value: FlightsContextValue = {
