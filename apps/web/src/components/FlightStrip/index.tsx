@@ -27,7 +27,9 @@ const FlightStrip = ({ flight }: Props) => {
     const dismissed = isDismissedToday(flight);
     const snoozed = isSnoozed(flight);
     const doneTasks = flight.tasks.filter((t) => t.done);
-    const nextWaypoint = sortTasks(flight.tasks).find((t) => !t.done);
+    const sortedTasks = sortTasks(flight.tasks);
+    const expeditedWaypoints = sortedTasks.filter((t) => !t.done && t.expedite);
+    const nextWaypoint = sortedTasks.find((t) => !t.done);
 
     // These are RUNTIME-DYNAMIC — keep as inline style
     const accentColor = dismissed && !snoozed ? '#1d4d1d' : '#4ade80';
@@ -99,15 +101,25 @@ const FlightStrip = ({ flight }: Props) => {
                             {flight.name}
                         </div>
                     )}
-                    {nextWaypoint && (
-                        <div
-                            className="font-mono text-[11px] mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap flex items-center gap-[4px]"
-                            style={{ color: nextWaypoint.expedite ? '#4ade80' : '#2a5c2a' }}
-                        >
-                            <span className="truncate">→ {nextWaypoint.text}</span>
-                            {nextWaypoint.expedite && <IconFlag />}
-                        </div>
-                    )}
+                    {expeditedWaypoints.length > 0
+                        ? expeditedWaypoints.map((wp) => (
+                              <div
+                                  key={wp.id}
+                                  className="font-mono text-[11px] mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap flex items-center gap-[4px]"
+                                  style={{ color: '#4ade80' }}
+                              >
+                                  <span className="truncate">→ {wp.text}</span>
+                                  <IconFlag />
+                              </div>
+                          ))
+                        : nextWaypoint && (
+                              <div
+                                  className="font-mono text-[11px] mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap flex items-center gap-[4px]"
+                                  style={{ color: '#2a5c2a' }}
+                              >
+                                  <span className="truncate">→ {nextWaypoint.text}</span>
+                              </div>
+                          )}
                     {flight.note && !dismissed && (
                         <div className="font-mono text-[10px] text-[#2a5c2a] mt-[1px] overflow-hidden text-ellipsis whitespace-nowrap italic">
                             ⌁ {flight.note}
