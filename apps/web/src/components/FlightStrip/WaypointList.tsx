@@ -53,7 +53,7 @@ const WaypointList = ({ flightId }: Props) => {
                     key={task.id}
                     className={clsx(
                         'flex items-center gap-2 py-[5px] border-b border-[#0a160a]',
-                        task.expedite && !task.done && 'border-l-2 border-l-[#4ade80]',
+                        task.expedite && !task.done ? 'border-l-2 border-l-[#4ade80] pl-[10px]' : 'pl-[12px]',
                     )}
                 >
                     <button
