@@ -53,6 +53,7 @@ export interface FlightsContextValue {
     deleteWaypoint: (flightId: string, taskId: string) => void;
     editWaypoint: (flightId: string, taskId: string, text: string) => void;
     toggleWaypointExpedite: (flightId: string, taskId: string) => void;
+    reorderFlights: (orderedIds: string[]) => void;
 }
 
 const FlightsContext = createContext<FlightsContextValue | null>(null);
@@ -270,11 +271,30 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         saveData(next);
     };
 
+    const reorderFlights = (orderedIds: string[]) => {
+        const next = {
+            ...data,
+            flights: data.flights.map((f) => {
+                const idx = orderedIds.indexOf(f.id);
+                return idx !== -1 ? { ...f, order: idx } : f;
+            }),
+        };
+        setData(next);
+        saveData(next);
+    };
+
+    const sortByOrder = (a: Flight, b: Flight): number => {
+        if (a.order === undefined && b.order === undefined) return 0;
+        if (a.order === undefined) return 1;
+        if (b.order === undefined) return -1;
+        return a.order - b.order;
+    };
+
     const value: FlightsContextValue = {
         data,
         loading,
         user,
-        active: data.flights.filter((f) => !isDismissedToday(f)),
+        active: data.flights.filter((f) => !isDismissedToday(f)).sort(sortByOrder),
         done: data.flights.filter((f) => isDismissedToday(f)),
         notificationStatus,
         requestNotification,
@@ -290,6 +310,7 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         deleteWaypoint,
         editWaypoint,
         toggleWaypointExpedite,
+        reorderFlights,
     };
 
     return <FlightsContext.Provider value={value}>{children}</FlightsContext.Provider>;
