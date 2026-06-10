@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { DndContext, DragOverlay, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import clsx from 'clsx';
 import FlightStrip from './components/FlightStrip';
 import { IconBell } from './components/FlightStrip/icons';
@@ -7,7 +10,31 @@ import { useFlights } from './hooks/useFlights';
 const App = () => {
     const [newName, setNewName] = useState('');
     const [showAdd, setShowAdd] = useState(false);
-    const { data, loading, user, active, done, notificationStatus, requestNotification, addFlight } = useFlights();
+    const [draggingId, setDraggingId] = useState<string | null>(null);
+    const { data, loading, user, active, done, notificationStatus, requestNotification, addFlight, reorderFlights } =
+        useFlights();
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: { distance: 5 },
+        }),
+    );
+
+    const activeIds = active.map((f) => f.id);
+    const draggingFlight = draggingId ? (active.find((f) => f.id === draggingId) ?? null) : null;
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setDraggingId(String(event.active.id));
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active: dragActive, over } = event;
+        setDraggingId(null);
+        if (!over || dragActive.id === over.id) return;
+        const oldIndex = activeIds.indexOf(String(dragActive.id));
+        const newIndex = activeIds.indexOf(String(over.id));
+        reorderFlights(arrayMove(activeIds, oldIndex, newIndex));
+    };
 
     if (loading) return null;
 
@@ -88,11 +115,23 @@ const App = () => {
                 {active.length > 0 && (
                     <>
                         <div className="text-[9px] tracking-[3px] text-[#2a5c2a] uppercase mt-5 mb-2">// AIRBORNE</div>
-                        <div className="border border-[#1a3d1a] bg-[rgba(0,12,0,0.4)] p-[3px]">
-                            {active.map((flight) => (
-                                <FlightStrip key={flight.id} flight={flight} />
-                            ))}
-                        </div>
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragStart={handleDragStart}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <div className="border border-[#1a3d1a] bg-[rgba(0,12,0,0.4)] p-[3px]">
+                                <SortableContext items={activeIds} strategy={verticalListSortingStrategy}>
+                                    {active.map((flight) => (
+                                        <FlightStrip key={flight.id} flight={flight} />
+                                    ))}
+                                </SortableContext>
+                            </div>
+                            <DragOverlay>
+                                {draggingFlight && <FlightStrip flight={draggingFlight} isDragOverlay />}
+                            </DragOverlay>
+                        </DndContext>
                     </>
                 )}
 
