@@ -13,6 +13,7 @@ export interface Flight {
     note: string | null;
     dismissedOn: string | null;
     snoozedUntil: number | null;
+    order?: number;
 }
 
 export interface UserProfile {
