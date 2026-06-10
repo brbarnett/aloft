@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import type { Flight } from '@aloft/types';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import clsx from 'clsx';
 import { isDismissedToday, isSnoozed, snoozeLabel, useFlights } from '../../hooks/useFlights';
+import DragHandle from './DragHandle';
 import FlightStripActions from './FlightStripActions';
 import WaypointList, { sortTasks } from './WaypointList';
 import { IconEdit, IconFlag, IconTrash } from './icons';
 
 interface Props {
     flight: Flight;
+    isDragOverlay?: boolean;
 }
 
-const FlightStrip = ({ flight }: Props) => {
+const FlightStrip = ({ flight, isDragOverlay = false }: Props) => {
     const { renameFlight, deleteFlight, setNote } = useFlights();
     const [expanded, setExpanded] = useState(false);
     const [editingName, setEditingName] = useState(false);
@@ -23,6 +27,10 @@ const FlightStrip = ({ flight }: Props) => {
         const t = setInterval(() => forceUpdate((n) => n + 1), 30_000);
         return () => clearInterval(t);
     }, []);
+
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: flight.id,
+    });
 
     const dismissed = isDismissedToday(flight);
     const snoozed = isSnoozed(flight);
@@ -48,19 +56,29 @@ const FlightStrip = ({ flight }: Props) => {
     };
 
     return (
-        <>
+        <div
+            ref={isDragOverlay ? undefined : setNodeRef}
+            style={{
+                transform: isDragOverlay ? undefined : CSS.Transform.toString(transform),
+                transition: isDragOverlay ? undefined : transition,
+                opacity: isDragging && !isDragOverlay ? 0.3 : 1,
+            }}
+            className="mb-[3px]"
+        >
             {/* Strip row */}
             <div
                 className={clsx(
-                    'flex items-stretch border border-[#1d4d1d] min-h-[52px] transition-colors',
-                    expanded ? 'mb-0' : 'mb-[3px]',
-                    'cursor-pointer',
+                    'flex items-stretch border min-h-[52px] transition-colors cursor-pointer',
+                    isDragOverlay ? 'border-[#86efac] shadow-[0_8px_24px_rgba(0,0,0,0.8)]' : 'border-[#1d4d1d]',
                 )}
                 style={{ background: expanded ? 'rgba(0,22,0,0.85)' : 'rgba(0,16,0,0.7)' }}
-                onClick={() => !editingName && setExpanded((e) => !e)}
+                onClick={() => !editingName && !isDragOverlay && setExpanded((e) => !e)}
             >
                 {/* Accent bar */}
                 <div className="w-[5px] shrink-0 self-stretch" style={{ background: accentColor }} />
+
+                {/* Drag handle — hidden on dismissed strips */}
+                {!dismissed && <DragHandle listeners={listeners} attributes={attributes} />}
 
                 {/* Callsign column */}
                 <div
@@ -158,9 +176,9 @@ const FlightStrip = ({ flight }: Props) => {
                 </div>
             </div>
 
-            {/* Expanded panel */}
-            {expanded && (
-                <div className="border border-[#1d4d1d] border-t-0 bg-[rgba(0,10,0,0.85)] mb-[3px]">
+            {/* Expanded panel — hidden while dragging */}
+            {expanded && !isDragging && (
+                <div className="border border-[#1d4d1d] border-t-0 bg-[rgba(0,10,0,0.85)]">
                     <div className="p-3 pb-[14px] pl-[98px]">
                         <WaypointList flightId={flight.id} />
 
@@ -196,7 +214,7 @@ const FlightStrip = ({ flight }: Props) => {
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 };
 
