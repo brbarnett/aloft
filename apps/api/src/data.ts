@@ -1,35 +1,30 @@
-import type { AppData, Flight } from '@aloft/types';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import type { Flight, UserProfile } from '@aloft/types';
+import { getDb } from './db.js';
 
-const dir = join(dirname(fileURLToPath(import.meta.url)), '..', 'data');
-const file = join(dir, 'appdata.json');
+interface UserDocument {
+    _id: string;
+    profile: UserProfile;
+    flights: Flight[];
+}
 
-export const readAppData = async (): Promise<AppData> => {
-    try {
-        const raw = await readFile(file, 'utf-8');
-        return JSON.parse(raw) as AppData;
-    } catch {
-        return { users: {} };
-    }
-};
-
-export const writeAppData = async (data: AppData): Promise<void> => {
-    await mkdir(dir, { recursive: true });
-    await writeFile(file, JSON.stringify(data, null, 2), 'utf-8');
-};
+const users = () => getDb().collection<UserDocument>('users');
 
 export const readUserFlights = async (userId: string): Promise<Flight[]> => {
-    const data = await readAppData();
-    return data.users[userId]?.flights ?? [];
+    const doc = await users().findOne({ _id: userId });
+    return doc?.flights ?? [];
 };
 
 export const writeUserFlights = async (userId: string, flights: Flight[]): Promise<void> => {
-    const data = await readAppData();
-    if (!data.users[userId]) {
+    const result = await users().updateOne({ _id: userId }, { $set: { flights } });
+    if (result.matchedCount === 0) {
         throw Object.assign(new Error('User not found'), { statusCode: 404 });
     }
-    data.users[userId].flights = flights;
-    await writeAppData(data);
+};
+
+export const upsertUserProfile = async (profile: UserProfile): Promise<void> => {
+    await users().updateOne(
+        { _id: profile.id },
+        { $set: { profile }, $setOnInsert: { flights: [] } },
+        { upsert: true },
+    );
 };

@@ -4,7 +4,7 @@ import FastifyJwt from '@fastify/jwt';
 import FastifyOAuth2 from '@fastify/oauth2';
 import type { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
-import { readAppData, writeAppData } from './data.js';
+import { upsertUserProfile } from './data.js';
 
 declare module 'fastify' {
     interface FastifyInstance {
@@ -84,21 +84,14 @@ const _authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
             const googleUser = (await response.json()) as GoogleUserInfo;
 
-            const appData = await readAppData();
-
             const profile: UserProfile = {
                 id: googleUser.id,
                 email: googleUser.email,
                 name: googleUser.name,
                 picture: googleUser.picture ?? null,
             };
-            if (appData.users[profile.id]) {
-                appData.users[profile.id].profile = profile;
-            } else {
-                appData.users[profile.id] = { profile, flights: [] };
-            }
 
-            await writeAppData(appData);
+            await upsertUserProfile(profile);
 
             const jwtPayload = {
                 id: googleUser.id,

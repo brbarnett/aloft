@@ -1,4 +1,4 @@
-.PHONY: install dev frontend backend build typecheck lint fix clean preview
+.PHONY: install dev frontend backend build typecheck lint fix clean preview up down image run
 
 install:
 	pnpm install
@@ -27,6 +27,23 @@ lint:
 
 fix:
 	pnpm format
+
+up:
+	docker compose up -d
+
+down:
+	docker compose down
+
+image:
+	docker build -t aloft .
+
+run:
+	docker run --rm \
+		--network aloft_default \
+		--env-file apps/api/.env \
+		-e MONGODB_URI=mongodb://mongo:27017/aloft \
+		-p 8080:8080 \
+		aloft
 
 clean:
 	find . -name 'dist' -not -path '*/node_modules/*' -exec rm -rf {} +
