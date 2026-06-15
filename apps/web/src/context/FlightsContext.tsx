@@ -4,11 +4,23 @@ import { restoreSnoozedNotifications, scheduleWakeNotification } from '../utils/
 import { getUser, loadData, loadNotificationState, saveData, saveNotificationState } from '../utils/storage';
 
 const generateCallsign = (name: string): string => {
-    const words = name.trim().split(/\s+/);
-    const letters = words.slice(0, 3).map((w) => w[0]?.toUpperCase() ?? 'X');
-    while (letters.length < 3) letters.push('X');
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    let code: string;
+    if (words.length >= 3) {
+        code = words
+            .slice(0, 3)
+            .map((w) => w[0]?.toUpperCase() ?? 'X')
+            .join('');
+    } else if (words.length === 2) {
+        const a = words[0].toUpperCase().replace(/[^A-Z]/g, '');
+        const b = words[1].toUpperCase().replace(/[^A-Z]/g, '');
+        code = (a[0] ?? 'X') + (a[1] ?? 'X') + (b[0] ?? 'X');
+    } else {
+        const upper = (words[0] ?? '').toUpperCase().replace(/[^A-Z]/g, '');
+        code = upper.slice(0, 3).padEnd(3, 'X');
+    }
     const num = String(Math.floor(Math.random() * 99) + 1).padStart(2, '0');
-    return `${letters.join('')}-${num}`;
+    return `${code}-${num}`;
 };
 
 export const getTodayStr = (): string => new Date().toISOString().split('T')[0];
@@ -52,6 +64,7 @@ export interface FlightsContextValue {
     groundFlight: (id: string) => void;
     ungroundFlight: (id: string) => void;
     renameFlight: (id: string, name: string) => void;
+    renameCallsign: (id: string, callsign: string) => void;
     setNote: (id: string, note: string | null) => void;
     addWaypoint: (flightId: string, text: string) => void;
     toggleWaypoint: (flightId: string, taskId: string) => void;
@@ -232,6 +245,12 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         saveData(next);
     };
 
+    const renameCallsign = (id: string, callsign: string) => {
+        const next = { ...data, flights: data.flights.map((f) => (f.id === id ? { ...f, callsign } : f)) };
+        setData(next);
+        saveData(next);
+    };
+
     const setNote = (id: string, note: string | null) => {
         const next = { ...data, flights: data.flights.map((f) => (f.id === id ? { ...f, note } : f)) };
         setData(next);
@@ -333,6 +352,7 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         groundFlight,
         ungroundFlight,
         renameFlight,
+        renameCallsign,
         setNote,
         addWaypoint,
         toggleWaypoint,

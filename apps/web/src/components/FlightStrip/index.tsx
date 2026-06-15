@@ -15,10 +15,12 @@ interface Props {
 }
 
 const FlightStrip = ({ flight, isDragOverlay = false }: Props) => {
-    const { renameFlight, deleteFlight, setNote } = useFlights();
+    const { renameFlight, renameCallsign, deleteFlight, setNote } = useFlights();
     const [expanded, setExpanded] = useState(false);
     const [editingName, setEditingName] = useState(false);
     const [nameVal, setNameVal] = useState(flight.name);
+    const [editingCallsign, setEditingCallsign] = useState(false);
+    const [callsignVal, setCallsignVal] = useState(flight.callsign);
     const [editingNote, setEditingNote] = useState(false);
     const [noteVal, setNoteVal] = useState(flight.note ?? '');
     const [, forceUpdate] = useState(0);
@@ -43,6 +45,13 @@ const FlightStrip = ({ flight, isDragOverlay = false }: Props) => {
     // These are RUNTIME-DYNAMIC — keep as inline style
     const accentColor = (dismissed && !snoozed) || grounded ? '#1d4d1d' : '#4ade80';
     const nameColor = dismissed || grounded ? '#1d4d1d' : '#6ee77c';
+
+    const commitCallsign = () => {
+        const v = callsignVal.trim().toUpperCase();
+        if (v && v !== flight.callsign) renameCallsign(flight.id, v);
+        else setCallsignVal(flight.callsign);
+        setEditingCallsign(false);
+    };
 
     const commitRename = () => {
         const v = nameVal.trim();
@@ -73,7 +82,7 @@ const FlightStrip = ({ flight, isDragOverlay = false }: Props) => {
                     isDragOverlay ? 'border-[#86efac] shadow-[0_8px_24px_rgba(0,0,0,0.8)]' : 'border-[#1d4d1d]',
                 )}
                 style={{ background: expanded ? 'rgba(0,22,0,0.85)' : 'rgba(0,16,0,0.7)' }}
-                onClick={() => !editingName && !isDragOverlay && setExpanded((e) => !e)}
+                onClick={() => !editingName && !editingCallsign && !isDragOverlay && setExpanded((e) => !e)}
             >
                 {/* Accent bar */}
                 <div className="w-[5px] shrink-0 self-stretch" style={{ background: accentColor }} />
@@ -86,9 +95,34 @@ const FlightStrip = ({ flight, isDragOverlay = false }: Props) => {
                     className={clsx(
                         'w-[80px] shrink-0 flex flex-col items-center justify-center border-r border-[#1a3a1a] p-2 font-mono text-[11px] font-bold tracking-[1px] text-center leading-[1.4]',
                         dismissed ? 'text-[#1d4d1d]' : 'text-[#86efac]',
+                        !dismissed && !isDragOverlay && 'cursor-text',
                     )}
+                    onClick={(e) => {
+                        if (!dismissed && !isDragOverlay) {
+                            e.stopPropagation();
+                            setEditingCallsign(true);
+                        }
+                    }}
                 >
-                    {flight.callsign}
+                    {editingCallsign ? (
+                        <input
+                            className="w-full bg-[rgba(0,8,0,0.6)] border border-[#2a5c2a] text-[#86efac] font-mono text-[11px] font-bold tracking-[1px] text-center px-[2px] py-[1px] outline-none uppercase"
+                            value={callsignVal}
+                            autoFocus
+                            onChange={(e) => setCallsignVal(e.target.value.toUpperCase())}
+                            onBlur={commitCallsign}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') commitCallsign();
+                                if (e.key === 'Escape') {
+                                    setCallsignVal(flight.callsign);
+                                    setEditingCallsign(false);
+                                }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    ) : (
+                        flight.callsign
+                    )}
                     {snoozed && (
                         <span className="text-[9px] text-[#4ade80] block mt-[2px]">⏱ {snoozeLabel(flight)}</span>
                     )}
