@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { isDismissedToday, isGrounded, isSnoozed, snoozeLabel, useFlights } from '../../hooks/useFlights';
 import { IconHold, IconUndo } from './icons';
@@ -35,6 +35,20 @@ const FlightStripActions = ({ flightId }: Props) => {
     const { data, dismissFlight, undoDismiss, snoozeFlight, groundFlight, ungroundFlight } = useFlights();
     const flight = data.flights.find((f) => f.id === flightId);
     const [showHold, setShowHold] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+    useEffect(() => {
+        if (!showHold) return;
+        const handleMouseDown = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setShowHold(false);
+            }
+        };
+        document.addEventListener('mousedown', handleMouseDown);
+        return () => document.removeEventListener('mousedown', handleMouseDown);
+    }, [showHold]);
 
     if (!flight) return null;
 
@@ -42,38 +56,80 @@ const FlightStripActions = ({ flightId }: Props) => {
     const dismissed = isDismissedToday(flight);
     const snoozed = isSnoozed(flight);
 
+    const holdOptions = getHoldOptions();
+    const totalOptions = holdOptions.length + 1; // +1 for GROUND
+
+    const closeHold = () => {
+        setShowHold(false);
+        triggerRef.current?.focus();
+    };
+
+    const handleOptionKeyDown = (e: React.KeyboardEvent, index: number) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeHold();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            optionRefs.current[(index + 1) % totalOptions]?.focus();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            optionRefs.current[(index - 1 + totalOptions) % totalOptions]?.focus();
+        }
+    };
+
     return (
         <div className="mt-[10px]">
             {!dismissed && !grounded && (
                 <div className="flex gap-2 items-center flex-wrap">
-                    <div className="relative">
+                    <div className="relative" ref={containerRef}>
                         <button
+                            ref={triggerRef}
                             className={clsx(btnBase, 'text-[10px] border-[#2a5c2a] text-[#2a7a2a]')}
                             onClick={() => setShowHold((v) => !v)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Escape') {
+                                    setShowHold(false);
+                                } else if ((e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') && !showHold) {
+                                    e.preventDefault();
+                                    setShowHold(true);
+                                    setTimeout(() => optionRefs.current[0]?.focus(), 0);
+                                } else if (e.key === 'ArrowDown' && showHold) {
+                                    e.preventDefault();
+                                    optionRefs.current[0]?.focus();
+                                }
+                            }}
                         >
                             <IconHold /> HOLD PATTERN
                         </button>
                         {showHold && (
                             <div className="absolute top-[calc(100%+4px)] left-0 bg-[#060e06] border border-[#1d4d1d] z-[100] min-w-[110px]">
-                                {getHoldOptions().map((opt) => (
+                                {holdOptions.map((opt, i) => (
                                     <button
                                         key={opt.label}
+                                        ref={(el) => {
+                                            optionRefs.current[i] = el;
+                                        }}
                                         className="block w-full bg-transparent border-none font-mono text-[10px] text-[#4ade80] px-3 py-[6px] text-left cursor-pointer tracking-[1px]"
                                         onClick={() => {
                                             snoozeFlight(flightId, opt.until);
-                                            setShowHold(false);
+                                            closeHold();
                                         }}
+                                        onKeyDown={(e) => handleOptionKeyDown(e, i)}
                                     >
                                         {opt.label}
                                     </button>
                                 ))}
                                 <div className="border-t border-[#1d4d1d] mx-2 my-[3px]" />
                                 <button
+                                    ref={(el) => {
+                                        optionRefs.current[holdOptions.length] = el;
+                                    }}
                                     className="block w-full bg-transparent border-none font-mono text-[10px] text-[#2a5c2a] px-3 py-[6px] text-left cursor-pointer tracking-[1px]"
                                     onClick={() => {
                                         groundFlight(flightId);
-                                        setShowHold(false);
+                                        closeHold();
                                     }}
+                                    onKeyDown={(e) => handleOptionKeyDown(e, holdOptions.length)}
                                 >
                                     GROUND
                                 </button>

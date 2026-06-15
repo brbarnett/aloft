@@ -108,9 +108,53 @@ const App = () => {
                         </div>
                     </div>
                     <div className="mt-[6px] text-[11px] text-[#2a5c2a] tracking-[1px] whitespace-nowrap">
-                        {dateStr} &nbsp;·&nbsp; <span className="text-[#4ade80]">{active.length}</span> AIRBORNE
-                        &nbsp;·&nbsp; <span className="text-[#4ade80]">{done.length}</span> CLEARED
+                        {dateStr} &nbsp;&middot;&nbsp; <span className="text-[#4ade80]">{active.length}</span> AIRBORNE
+                        &nbsp;&middot;&nbsp; <span className="text-[#4ade80]">{done.length}</span> CLEARED
                     </div>
+                </div>
+
+                {/* Add flight section */}
+                <div className="mt-4 mb-1">
+                    {showAdd ? (
+                        <form className="flex gap-2" onSubmit={handleAdd}>
+                            <input
+                                className="bg-[rgba(0,8,0,0.6)] border border-[#2a5c2a] text-[#6ee77c] font-mono text-[14px] px-3 py-2 flex-1 outline-none"
+                                placeholder="FLIGHT NAME..."
+                                value={newName}
+                                autoFocus
+                                onChange={(e) => setNewName(e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                className="bg-transparent border border-[#1d4d1d] text-[#2a5c2a] font-mono text-[11px] px-[14px] py-2 cursor-pointer tracking-[1px] uppercase"
+                                onClick={() => {
+                                    setShowAdd(false);
+                                    setNewName('');
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className={clsx(
+                                    'font-mono text-[11px] px-[14px] py-2 tracking-[1px] uppercase',
+                                    newName.trim()
+                                        ? 'bg-[rgba(74,222,128,0.1)] border border-[#4ade80] text-[#4ade80] cursor-pointer'
+                                        : 'bg-transparent border border-[#1d4d1d] text-[#1d4d1d] cursor-default',
+                                )}
+                                disabled={!newName.trim()}
+                            >
+                                SQUAWK
+                            </button>
+                        </form>
+                    ) : (
+                        <button
+                            className="bg-transparent border border-dashed border-[#1a3d1a] text-[#1d5c1d] font-mono text-[11px] px-4 py-[10px] cursor-pointer tracking-[1px] w-full text-left"
+                            onClick={() => setShowAdd(true)}
+                        >
+                            + SQUAWK NEW FLIGHT
+                        </button>
+                    )}
                 </div>
 
                 {/* All cleared banner */}
@@ -121,6 +165,13 @@ const App = () => {
                             ✓ ALL FLIGHTS CLEARED FOR TODAY
                         </div>
                     )}
+
+                {/* Empty state */}
+                {data.flights.length === 0 && (
+                    <div className="text-[11px] text-[#1d4d1d] tracking-[2px] text-center py-[40px]">
+                        NO ACTIVE FLIGHTS
+                    </div>
+                )}
 
                 {/* Airborne section */}
                 {active.length > 0 && (
@@ -178,57 +229,6 @@ const App = () => {
                         )}
                     </>
                 )}
-
-                {/* Empty state */}
-                {data.flights.length === 0 && (
-                    <div className="text-[11px] text-[#1d4d1d] tracking-[2px] text-center py-[40px]">
-                        NO ACTIVE FLIGHTS — SQUAWK A NEW ONE BELOW
-                    </div>
-                )}
-
-                {/* Add flight section */}
-                <div className="mt-4">
-                    {showAdd ? (
-                        <form className="flex gap-2" onSubmit={handleAdd}>
-                            <input
-                                className="bg-[rgba(0,8,0,0.6)] border border-[#2a5c2a] text-[#6ee77c] font-mono text-[14px] px-3 py-2 flex-1 outline-none"
-                                placeholder="FLIGHT NAME..."
-                                value={newName}
-                                autoFocus
-                                onChange={(e) => setNewName(e.target.value)}
-                            />
-                            <button
-                                type="button"
-                                className="bg-transparent border border-[#1d4d1d] text-[#2a5c2a] font-mono text-[11px] px-[14px] py-2 cursor-pointer tracking-[1px] uppercase"
-                                onClick={() => {
-                                    setShowAdd(false);
-                                    setNewName('');
-                                }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                className={clsx(
-                                    'font-mono text-[11px] px-[14px] py-2 tracking-[1px] uppercase',
-                                    newName.trim()
-                                        ? 'bg-[rgba(74,222,128,0.1)] border border-[#4ade80] text-[#4ade80] cursor-pointer'
-                                        : 'bg-transparent border border-[#1d4d1d] text-[#1d4d1d] cursor-default',
-                                )}
-                                disabled={!newName.trim()}
-                            >
-                                SQUAWK
-                            </button>
-                        </form>
-                    ) : (
-                        <button
-                            className="bg-transparent border border-dashed border-[#1a3d1a] text-[#1d5c1d] font-mono text-[11px] px-4 py-[10px] cursor-pointer tracking-[1px] w-full text-left"
-                            onClick={() => setShowAdd(true)}
-                        >
-                            + SQUAWK NEW FLIGHT
-                        </button>
-                    )}
-                </div>
             </div>
         </div>
     );

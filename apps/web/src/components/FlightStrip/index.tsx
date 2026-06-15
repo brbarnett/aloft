@@ -82,7 +82,17 @@ const FlightStrip = ({ flight, isDragOverlay = false }: Props) => {
                     isDragOverlay ? 'border-[#86efac] shadow-[0_8px_24px_rgba(0,0,0,0.8)]' : 'border-[#1d4d1d]',
                 )}
                 style={{ background: expanded ? 'rgba(0,22,0,0.85)' : 'rgba(0,16,0,0.7)' }}
+                role={isDragOverlay ? undefined : 'button'}
+                tabIndex={isDragOverlay ? undefined : 0}
+                aria-expanded={isDragOverlay ? undefined : expanded}
                 onClick={() => !editingName && !editingCallsign && !isDragOverlay && setExpanded((e) => !e)}
+                onKeyDown={(e) => {
+                    if (isDragOverlay || editingName || editingCallsign) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setExpanded((v) => !v);
+                    }
+                }}
             >
                 {/* Accent bar */}
                 <div className="w-[5px] shrink-0 self-stretch" style={{ background: accentColor }} />
