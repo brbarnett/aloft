@@ -15,7 +15,7 @@ RUN pnpm --filter @aloft/web build
 RUN pnpm --filter @aloft/api build
 
 # Produce a self-contained API deployment (prod deps only, no workspace packages)
-RUN pnpm --filter @aloft/api deploy --prod /deploy/api
+RUN pnpm --filter @aloft/api deploy --prod --legacy /deploy/api
 
 # Stage 2: Production
 FROM node:25-slim
