@@ -12,6 +12,7 @@ export interface Flight {
     tasks: Task[];
     note: string | null;
     dismissedOn: string | null;
+    groundedOn: string | null;
     snoozedUntil: number | null;
     order?: number;
 }

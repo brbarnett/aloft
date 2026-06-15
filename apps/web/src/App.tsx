@@ -10,9 +10,20 @@ import { useFlights } from './hooks/useFlights';
 const App = () => {
     const [newName, setNewName] = useState('');
     const [showAdd, setShowAdd] = useState(false);
+    const [showGrounded, setShowGrounded] = useState(false);
     const [draggingId, setDraggingId] = useState<string | null>(null);
-    const { data, loading, user, active, done, notificationStatus, requestNotification, addFlight, reorderFlights } =
-        useFlights();
+    const {
+        data,
+        loading,
+        user,
+        active,
+        done,
+        grounded,
+        notificationStatus,
+        requestNotification,
+        addFlight,
+        reorderFlights,
+    } = useFlights();
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -146,6 +157,25 @@ const App = () => {
                                 <FlightStrip key={flight.id} flight={flight} />
                             ))}
                         </div>
+                    </>
+                )}
+
+                {/* Grounded section */}
+                {grounded.length > 0 && (
+                    <>
+                        <button
+                            className="text-[9px] tracking-[3px] text-[#2a5c2a] uppercase mt-5 mb-2 bg-transparent border-none cursor-pointer font-mono flex items-center gap-2 p-0"
+                            onClick={() => setShowGrounded((v) => !v)}
+                        >
+                            // GROUNDED ({grounded.length}) {showGrounded ? '▲' : '▼'}
+                        </button>
+                        {showGrounded && (
+                            <div className="border border-[#1a3d1a] bg-[rgba(0,12,0,0.4)] p-[3px]">
+                                {grounded.map((flight) => (
+                                    <FlightStrip key={flight.id} flight={flight} />
+                                ))}
+                            </div>
+                        )}
                     </>
                 )}
 

@@ -21,6 +21,8 @@ export const isDismissedToday = (flight: Flight): boolean => {
 
 export const isSnoozed = (flight: Flight): boolean => !!(flight.snoozedUntil && Date.now() < flight.snoozedUntil);
 
+export const isGrounded = (flight: Flight): boolean => !!flight.groundedOn;
+
 export const snoozeLabel = (flight: Flight): string => {
     if (!flight.snoozedUntil) return '';
     const diff = flight.snoozedUntil - Date.now();
@@ -39,6 +41,7 @@ export interface FlightsContextValue {
     user: UserProfile | null;
     active: Flight[];
     done: Flight[];
+    grounded: Flight[];
     notificationStatus: string;
     requestNotification: () => void;
     addFlight: (name: string) => void;
@@ -46,6 +49,8 @@ export interface FlightsContextValue {
     dismissFlight: (id: string) => void;
     undoDismiss: (id: string) => void;
     snoozeFlight: (id: string, until: number) => void;
+    groundFlight: (id: string) => void;
+    ungroundFlight: (id: string) => void;
     renameFlight: (id: string, name: string) => void;
     setNote: (id: string, note: string | null) => void;
     addWaypoint: (flightId: string, text: string) => void;
@@ -156,6 +161,7 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
                     tasks: [],
                     note: null,
                     dismissedOn: null,
+                    groundedOn: null,
                     snoozedUntil: null,
                 },
             ],
@@ -198,6 +204,26 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         setData(next);
         saveData(next);
         scheduleWakeNotification({ snoozedUntil: until } as Flight);
+    };
+
+    const groundFlight = (id: string) => {
+        const next = {
+            ...data,
+            flights: data.flights.map((f) =>
+                f.id === id ? { ...f, groundedOn: getTodayStr(), dismissedOn: null, snoozedUntil: null } : f,
+            ),
+        };
+        setData(next);
+        saveData(next);
+    };
+
+    const ungroundFlight = (id: string) => {
+        const next = {
+            ...data,
+            flights: data.flights.map((f) => (f.id === id ? { ...f, groundedOn: null } : f)),
+        };
+        setData(next);
+        saveData(next);
     };
 
     const renameFlight = (id: string, name: string) => {
@@ -294,8 +320,9 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         data,
         loading,
         user,
-        active: data.flights.filter((f) => !isDismissedToday(f)).sort(sortByOrder),
-        done: data.flights.filter((f) => isDismissedToday(f)),
+        active: data.flights.filter((f) => !isDismissedToday(f) && !isGrounded(f)).sort(sortByOrder),
+        done: data.flights.filter((f) => isDismissedToday(f) && !isGrounded(f)),
+        grounded: data.flights.filter((f) => isGrounded(f)),
         notificationStatus,
         requestNotification,
         addFlight,
@@ -303,6 +330,8 @@ export const FlightsProvider = ({ children }: { children: React.ReactNode }) => 
         dismissFlight,
         undoDismiss,
         snoozeFlight,
+        groundFlight,
+        ungroundFlight,
         renameFlight,
         setNote,
         addWaypoint,

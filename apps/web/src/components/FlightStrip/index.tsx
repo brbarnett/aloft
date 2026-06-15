@@ -3,7 +3,7 @@ import type { Flight } from '@aloft/types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import clsx from 'clsx';
-import { isDismissedToday, isSnoozed, snoozeLabel, useFlights } from '../../hooks/useFlights';
+import { isDismissedToday, isGrounded, isSnoozed, snoozeLabel, useFlights } from '../../hooks/useFlights';
 import DragHandle from './DragHandle';
 import FlightStripActions from './FlightStripActions';
 import WaypointList, { sortTasks } from './WaypointList';
@@ -34,14 +34,15 @@ const FlightStrip = ({ flight, isDragOverlay = false }: Props) => {
 
     const dismissed = isDismissedToday(flight);
     const snoozed = isSnoozed(flight);
+    const grounded = isGrounded(flight);
     const doneTasks = flight.tasks.filter((t) => t.done);
     const sortedTasks = sortTasks(flight.tasks);
     const expeditedWaypoints = sortedTasks.filter((t) => !t.done && t.expedite);
     const nextWaypoint = sortedTasks.find((t) => !t.done);
 
     // These are RUNTIME-DYNAMIC — keep as inline style
-    const accentColor = dismissed && !snoozed ? '#1d4d1d' : '#4ade80';
-    const nameColor = dismissed ? '#1d4d1d' : '#6ee77c';
+    const accentColor = (dismissed && !snoozed) || grounded ? '#1d4d1d' : '#4ade80';
+    const nameColor = dismissed || grounded ? '#1d4d1d' : '#6ee77c';
 
     const commitRename = () => {
         const v = nameVal.trim();

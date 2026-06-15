@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import clsx from 'clsx';
-import { isDismissedToday, isSnoozed, snoozeLabel, useFlights } from '../../hooks/useFlights';
+import { isDismissedToday, isGrounded, isSnoozed, snoozeLabel, useFlights } from '../../hooks/useFlights';
 import { IconHold, IconUndo } from './icons';
 
 const nextMonday = (): number => {
@@ -32,18 +32,19 @@ interface Props {
 }
 
 const FlightStripActions = ({ flightId }: Props) => {
-    const { data, dismissFlight, undoDismiss, snoozeFlight } = useFlights();
+    const { data, dismissFlight, undoDismiss, snoozeFlight, groundFlight, ungroundFlight } = useFlights();
     const flight = data.flights.find((f) => f.id === flightId);
     const [showHold, setShowHold] = useState(false);
 
     if (!flight) return null;
 
+    const grounded = isGrounded(flight);
     const dismissed = isDismissedToday(flight);
     const snoozed = isSnoozed(flight);
 
     return (
         <div className="mt-[10px]">
-            {!dismissed && (
+            {!dismissed && !grounded && (
                 <div className="flex gap-2 items-center flex-wrap">
                     <div className="relative">
                         <button
@@ -66,6 +67,16 @@ const FlightStripActions = ({ flightId }: Props) => {
                                         {opt.label}
                                     </button>
                                 ))}
+                                <div className="border-t border-[#1d4d1d] mx-2 my-[3px]" />
+                                <button
+                                    className="block w-full bg-transparent border-none font-mono text-[10px] text-[#2a5c2a] px-3 py-[6px] text-left cursor-pointer tracking-[1px]"
+                                    onClick={() => {
+                                        groundFlight(flightId);
+                                        setShowHold(false);
+                                    }}
+                                >
+                                    GROUND
+                                </button>
                             </div>
                         )}
                     </div>
@@ -92,7 +103,7 @@ const FlightStripActions = ({ flightId }: Props) => {
                 </div>
             )}
 
-            {dismissed && !snoozed && (
+            {dismissed && !snoozed && !grounded && (
                 <div className="flex items-center gap-[10px]">
                     <span className="font-mono text-[10px] text-[#1d4d1d] tracking-[1px]">
                         CLEARED — RETURNS TOMORROW
@@ -100,6 +111,24 @@ const FlightStripActions = ({ flightId }: Props) => {
                     <button
                         className={clsx(btnBase, 'text-[9px] border-[#1d4d1d] text-[#4ade80]')}
                         onClick={() => undoDismiss(flightId)}
+                    >
+                        <IconUndo /> RECALL
+                    </button>
+                    <button
+                        className={clsx(btnBase, 'text-[9px] border-[#1d4d1d] text-[#2a5c2a]')}
+                        onClick={() => groundFlight(flightId)}
+                    >
+                        GROUND
+                    </button>
+                </div>
+            )}
+
+            {grounded && (
+                <div className="flex items-center gap-[10px]">
+                    <span className="font-mono text-[10px] text-[#1d4d1d] tracking-[1px]">GROUNDED</span>
+                    <button
+                        className={clsx(btnBase, 'text-[9px] border-[#1d4d1d] text-[#4ade80]')}
+                        onClick={() => ungroundFlight(flightId)}
                     >
                         <IconUndo /> RECALL
                     </button>

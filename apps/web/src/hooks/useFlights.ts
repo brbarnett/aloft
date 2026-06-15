@@ -1,1 +1,1 @@
-export { useFlights, isDismissedToday, isSnoozed, snoozeLabel } from '../context/FlightsContext';
+export { useFlights, isDismissedToday, isSnoozed, isGrounded, snoozeLabel } from '../context/FlightsContext';
